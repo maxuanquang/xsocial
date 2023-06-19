@@ -26,8 +26,14 @@ func HashPassword(password string, salt []byte) (string, error) {
 }
 
 // CheckPasswordHash checks if hashed password matches raw password
-func CheckPasswordHash(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+func CheckPasswordHash(hashedPassword, password string, salt []byte) error {
+	// Convert password string to byte slice
+	var passwordBytes = []byte(password)
+
+	// Append salt to password
+	passwordBytes = append(passwordBytes, salt...)
+
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), passwordBytes)
 }
 
 // Santinize removes redundant spaces and encodes some special characters which helps to avoid SQL injection

@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS `user`  (
     id BIGINT AUTO_INCREMENT,
     hashed_password VARCHAR(1000) NOT NULL,
-    salt VARCHAR(1000) NOT NULL,
+    salt VARBINARY(1000) NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     dob DATE NOT NULL,

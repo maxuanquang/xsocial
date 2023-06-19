@@ -19,7 +19,7 @@ import (
 type User struct {
 	ID             int64     `gorm:"column:id;type:bigint;primaryKey;autoIncrement"`
 	HashedPassword string    `gorm:"column:hashed_password;type:varchar(1000);not null"`
-	Salt           string    `gorm:"column:salt;type:varchar(1000);not null"`
+	Salt           []byte    `gorm:"column:salt;type:varbinary(1000);not null"`
 	FirstName      string    `gorm:"column:first_name;type:varchar(50);not null"`
 	LastName       string    `gorm:"column:last_name;type:varchar(50);not null"`
 	DOB            time.Time `gorm:"column:dob;type:date;not null"`
