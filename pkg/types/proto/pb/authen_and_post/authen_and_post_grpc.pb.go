@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v3.12.4
-// source: pkg/types/proto/authen_and_post.proto
+// source: authen_and_post.proto
 
 package authen_and_post
 
@@ -253,5 +253,5 @@ var AuthenticateAndPost_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pkg/types/proto/authen_and_post.proto",
+	Metadata: "authen_and_post.proto",
 }

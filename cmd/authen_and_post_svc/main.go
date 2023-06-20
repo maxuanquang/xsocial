@@ -1,28 +1,42 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net"
 
+	"github.com/maxuanquang/social-network/configs"
 	"github.com/maxuanquang/social-network/internal/app/authen_and_post_svc"
-	"github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
+	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	// Start authenticate and post service
-	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", 1080))
+	// Flags
+	cfgPath := flag.String("conf", "configs/files/test.yml", "Path to config file for this service")
+
+	// Load configurations
+	cfg, err := configs.GetAuthenticateAndPostConfig(*cfgPath)
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("failed to parse config: %v", err)
 	}
 
-	service := authen_and_post_svc.NewAuthenticateAndPostService()
-	var opts []grpc.ServerOption
-	grpcServer := grpc.NewServer(opts...) // The `...` is used to unpack the slice into individual arguments
-	authen_and_post.RegisterAuthenticateAndPostServer(grpcServer, service)
+	// Start new authenticate and post service
+	service, err := authen_and_post_svc.NewAuthenticateAndPostService(cfg)
+	if err != nil {
+		log.Fatalf("failed to init server: %v", err)
+	}
+
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", cfg.Port))
+	if err != nil {
+		log.Fatalf("can not listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	pb_aap.RegisterAuthenticateAndPostServer(grpcServer, service)
 	err = grpcServer.Serve(lis)
 	if err != nil {
-		log.Fatalf("Server stopped: %v", err)
+		log.Fatalf("server stopped: %v", err)
 	}
 }
