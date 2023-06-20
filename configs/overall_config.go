@@ -56,10 +56,11 @@ type NewsfeedConfig struct {
 }
 
 type WebConfig struct {
-	Port                int        `yaml:"port"`
-	APIVersions         []string   `yaml:"api_version"`
-	AuthenticateAndPost HostConfig `yaml:"authenticate_and_post"`
-	Newsfeed            HostConfig `yaml:"newsfeed"`
+	Port                int         `yaml:"port"`
+	APIVersions         []string    `yaml:"api_version"`
+	AuthenticateAndPost HostConfig  `yaml:"authenticate_and_post"`
+	Newsfeed            HostConfig  `yaml:"newsfeed"`
+	Redis               RedisConfig `yaml:"redis"`
 }
 
 type HostConfig struct {

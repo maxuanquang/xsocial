@@ -30,3 +30,4 @@ web_config:
     hosts: ["192.168.0.103:19001"]
   newsfeed:
     hosts: ["192.168.0.103:19002"]
+  redis: *REDIS
