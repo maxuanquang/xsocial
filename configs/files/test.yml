@@ -1,6 +1,6 @@
 # Common configurations for aap and nf
 mysql: &MYSQL
-  dsn: "quangmx:2511@tcp(192.168.0.103:3306)/social-network?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "quangmx:2511@tcp(192.168.0.103:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local"
   defaultStringSize: 256
   disableDatetimePrecision: true
   dontSupportRenameIndex: true

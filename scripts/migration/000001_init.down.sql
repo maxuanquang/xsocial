@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS `user_user`;
+DROP TABLE IF EXISTS `following`;
 
 DROP TABLE IF EXISTS `like`;
 

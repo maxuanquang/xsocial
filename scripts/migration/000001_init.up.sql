@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `like` (
     CONSTRAINT unique_post_id_user_id UNIQUE (post_id, user_id)
 );
 
-CREATE TABLE IF NOT EXISTS `user_user` (
+CREATE TABLE IF NOT EXISTS `following` (
     user_id BIGINT NOT NULL,
     follower_id BIGINT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES `user`(id),

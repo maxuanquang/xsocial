@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -49,22 +50,21 @@ func NewWebService(conf *configs.WebConfig) (*WebService, error) {
 	}, nil
 }
 
-// CheckUserAuthentication checks authentication of user and provides
-// a session_id cookie if authentication succeeded
 func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
+	// Validate request
 	var jsonRequest types.LoginRequest
 	err := ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("jsonRequest binds error: %v", err.Error())})
+		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-
 	err = validate.Struct(jsonRequest)
 	if err != nil {
 		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
+	// Call CheckUserAuthentication service
 	authentication, err := svc.AuthenticateAndPostClient.CheckUserAuthentication(ctx, &pb_aap.UserInfo{
 		UserName:     jsonRequest.UserName,
 		UserPassword: jsonRequest.Password,
@@ -77,8 +77,15 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 	// If logged in, set a sessionId for this session
 	sessionId := uuid.New().String()
 
-	// Save current sessionID and username in Redis
-	err = svc.RedisClient.Set(svc.RedisClient.Context(), sessionId, authentication.GetInfo().GetUserName(), 300*time.Second).Err()
+	// Save current sessionID and expiration time in Redis
+	err = svc.RedisClient.HSet(svc.RedisClient.Context(), sessionId,
+		"userId", authentication.GetInfo().GetUserId(),
+		"userName", authentication.GetInfo().GetUserName()).Err()
+	if err != nil {
+		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	err = svc.RedisClient.Expire(ctx, sessionId, time.Minute*5).Err()
 	if err != nil {
 		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -91,13 +98,13 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 }
 
 func (svc *WebService) CreateUser(ctx *gin.Context) {
+	// Validate request
 	var jsonRequest types.CreateUserRequest
 	err := ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
 		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-
 	err = validate.Struct(jsonRequest)
 	if err != nil {
 		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
@@ -124,28 +131,19 @@ func (svc *WebService) CreateUser(ctx *gin.Context) {
 
 func (svc *WebService) EditUser(ctx *gin.Context) {
 	// Check authorization
-	sessionId, err := ctx.Cookie("session_id")
+	_, _, userName, err := svc.CheckSessionAuthentication(ctx)
 	if err != nil {
 		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
 	}
 
-	userName, err := svc.RedisClient.Get(svc.RedisClient.Context(), sessionId).Result()
-	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
-	// Check request format
+	// Validate request
 	var jsonRequest types.EditUserRequest
 	err = ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
 		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-
 	err = validate.Struct(jsonRequest)
 	if err != nil {
 		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
@@ -168,5 +166,126 @@ func (svc *WebService) EditUser(ctx *gin.Context) {
 	}
 
 	ctx.IndentedJSON(http.StatusAccepted, gin.H{"message": "Edit user succeeded"})
+}
 
+// GetUserFollower gets followers of any user
+func (svc *WebService) GetUserFollower(ctx *gin.Context) {
+	// Validate parameter
+	stringUserId := ctx.Param("user_id")
+	userId, err := strconv.Atoi(stringUserId)
+	if err != nil {
+		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "ID is not existed"})
+		return
+	}
+
+	// Call GetUserFollower gprc service
+	userFollower, err := svc.AuthenticateAndPostClient.GetUserFollower(ctx, &pb_aap.UserInfo{
+		UserId: int64(userId),
+	})
+	if err != nil {
+		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Get user follower failed: %v", err)})
+		return
+	}
+
+	// Return necessary information
+	var followers []map[string]interface{}
+	for _, follower := range userFollower.GetFollowers() {
+		followers = append(followers, map[string]interface{}{"id": follower.UserId, "username": follower.UserName})
+	}
+
+	ctx.IndentedJSON(http.StatusAccepted, gin.H{"message": "Get followers succeeded", "followers": followers})
+}
+
+func (svc *WebService) FollowUser(ctx *gin.Context) {
+	// Check sessionId authentication
+	_, followerId, _, err := svc.CheckSessionAuthentication(ctx)
+	if err != nil {
+		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Validate parameter
+	stringUserId := ctx.Param("user_id")
+	userId, err := strconv.Atoi(stringUserId)
+	if err != nil {
+		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "ID is not existed"})
+		return
+	}
+
+	// Call FollowUser grpc service
+	_, err = svc.AuthenticateAndPostClient.FollowUser(ctx,
+		&pb_aap.UserAndFollower{
+			User:     &pb_aap.UserInfo{UserId: int64(userId)},
+			Follower: &pb_aap.UserInfo{UserId: int64(followerId)},
+		})
+	if err != nil {
+		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+}
+
+func (svc *WebService) UnfollowUser(ctx *gin.Context) {
+	// Check sessionId authentication
+	_, followerId, _, err := svc.CheckSessionAuthentication(ctx)
+	if err != nil {
+		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Validate parameter
+	stringUserId := ctx.Param("user_id")
+	userId, err := strconv.Atoi(stringUserId)
+	if err != nil {
+		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "ID is not existed"})
+		return
+	}
+
+	// Call UnfollowUser grpc service
+	_, err = svc.AuthenticateAndPostClient.UnfollowUser(ctx,
+		&pb_aap.UserAndFollower{
+			User:     &pb_aap.UserInfo{UserId: int64(userId)},
+			Follower: &pb_aap.UserInfo{UserId: int64(followerId)},
+		},
+	)
+	if err != nil {
+		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+}
+
+func (svc *WebService) CheckSessionAuthentication(ctx *gin.Context) (sessionId string, userId int, userName string, err error) {
+	sessionId, err = ctx.Cookie("session_id")
+	if err != nil {
+		return "", 0, "", err
+	}
+
+	userId, err = svc.RedisClient.HGet(svc.RedisClient.Context(), sessionId, "userId").Int()
+	if err != nil {
+		return "", 0, "", err
+	}
+
+	userName, err = svc.RedisClient.HGet(svc.RedisClient.Context(), sessionId, "userName").Result()
+	if err != nil {
+		return "", 0, "", err
+	}
+
+	return sessionId, userId, userName, nil
+}
+
+func (svc *WebService) ShouldBindAndValidateJSON(ctx *gin.Context, jsonRequest interface{}) error {
+	err := ctx.ShouldBindJSON(&jsonRequest)
+	if err != nil {
+		return err
+	}
+
+	err = validate.Struct(jsonRequest)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

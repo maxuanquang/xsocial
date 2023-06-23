@@ -17,7 +17,7 @@ func HashPassword(password string, salt []byte) (string, error) {
 	passwordBytes = append(passwordBytes, salt...)
 
 	// Get the bcrypt hashed password
-	hashedPasswordBytes, err := bcrypt.GenerateFromPassword(passwordBytes, 16)
+	hashedPasswordBytes, err := bcrypt.GenerateFromPassword(passwordBytes, 4)
 	if err != nil {
 		return "", err
 	}
@@ -42,11 +42,11 @@ func Santinize(data string) string {
 	return data
 }
 
-// Generate 16 bytes randomly and securely using the
+// Generate 4 bytes randomly and securely using the
 // Cryptographically secure pseudorandom number generator (CSPRNG)
 // in the crypto.rand package
 func GenerateRandomSalt() ([]byte, error) {
-	salt := make([]byte, 16)
+	salt := make([]byte, 4)
 
 	_, err := rand.Read(salt[:])
 	if err != nil {

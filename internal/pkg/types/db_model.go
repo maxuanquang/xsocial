@@ -50,7 +50,7 @@ type Post struct {
 	CreatedAt        time.Time `gorm:"column:created_at;type:datetime;default:current_timestamp;not null"`
 	Visible          bool      `gorm:"column:visible;type:boolean;not null"`
 
-	User User `gorm:"foreign_key:user_id;references:id"`
+	User User `gorm:"foreignKey:user_id;references:id"`
 }
 
 func (Post) TableName() string {
@@ -75,8 +75,8 @@ type Comment struct {
 	Content   string    `gorm:"column:content;type:text(100000);not null"`
 	CreatedAt time.Time `gorm:"column:created_at;type:datetime;not null;default:current_timestamp"`
 
-	Post Post `gorm:"foreign_key:post_id;references:id"`
-	User User `gorm:"foreign_key:user_id;references:id"`
+	Post Post `gorm:"foreignKey:post_id;references:id"`
+	User User `gorm:"foreignKey:user_id;references:id"`
 }
 
 func (Comment) TableName() string {
@@ -97,15 +97,15 @@ type Like struct {
 	UserID    int64     `gorm:"column:user_id;type:bigint;not null;index:unique_post_id_user_id,unique"`
 	CreatedAt time.Time `gorm:"column:created_at;type:datetime;not null;default:current_timestamp"`
 
-	Post Post `gorm:"constraint:foreign_key:post_id;references:id"`
-	User User `gorm:"foreign_key:user_id;references:id"`
+	Post Post `gorm:"constraint:foreignKey:post_id;references:id"`
+	User User `gorm:"foreignKey:user_id;references:id"`
 }
 
 func (Like) TableName() string {
 	return "like"
 }
 
-// CREATE TABLE IF NOT EXISTS `user_user` (
+// CREATE TABLE IF NOT EXISTS `following` (
 //     user_id BIGINT NOT NULL,
 //     follower_id BIGINT NOT NULL,
 //     FOREIGN KEY (user_id) REFERENCES `user`(id),
@@ -113,14 +113,14 @@ func (Like) TableName() string {
 //     CONSTRAINT unique_user_id_follower_id UNIQUE (user_id, follower_id)
 // );
 
-type UserUser struct {
+type Following struct {
 	UserID     int64 `gorm:"column:user_id;type:bigint;not null;index:unique_user_id_follower_id,unique"`
 	FollowerID int64 `gorm:"column:follower_id;type:bigint;not null;index:unique_user_id_follower_id,unique"`
 
-	User     User `gorm:"foreign_key:user_id;references:id"`
-	Follower User `gorm:"foreign_key:follower_id;references:id"`
+	User     User `gorm:"foreignKey:user_id;references:id"`
+	Follower User `gorm:"foreignKey:follower_id;references:id"`
 }
 
-func (UserUser) TableName() string {
-	return "user_user"
+func (Following) TableName() string {
+	return "following"
 }

@@ -49,6 +49,10 @@ func (a *randomClient) GetUserFollower(ctx context.Context, in *pb.UserInfo, opt
 	return a.clients[rand.Intn(len(a.clients))].GetUserFollower(ctx, in, opts...)
 }
 
-func (a *randomClient) GetPostDetail(ctx context.Context, in *pb.GetPostRequest, opts ...grpc.CallOption) (*pb.Post, error) {
-	return a.clients[rand.Intn(len(a.clients))].GetPostDetail(ctx, in, opts...)
+func (a *randomClient) FollowUser(ctx context.Context, in *pb.UserAndFollower, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+	return a.clients[rand.Intn(len(a.clients))].FollowUser(ctx, in, opts...)
+}
+
+func (a *randomClient) UnfollowUser(ctx context.Context, in *pb.UserAndFollower, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+	return a.clients[rand.Intn(len(a.clients))].UnfollowUser(ctx, in, opts...)
 }
