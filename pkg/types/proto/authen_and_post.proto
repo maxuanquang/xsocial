@@ -9,13 +9,18 @@ service AuthenticateAndPost {
 	rpc EditUser(UserDetailInfo) returns (UserResult) {}
 
 	// Group: friends
-	rpc GetUserFollower(UserInfo) returns (UserFollower) {}
-	rpc FollowUser(UserAndFollower) returns (ActionResult) {}
-	rpc UnfollowUser(UserAndFollower) returns (ActionResult) {}
-	// rpc GetUserPost(UserInfo) returns (Post) {} // Pending this API to wait for `group: posts` is implemented
+	rpc GetUserFollower(UserInfo) returns (UserFollowerInfo) {}
+	rpc FollowUser(UserAndFollowerInfo) returns (ActionResult) {}
+	rpc UnfollowUser(UserAndFollowerInfo) returns (ActionResult) {}
+	rpc GetUserPost(UserInfo) returns (UserPostDetailInfo) {}
 
 	// Group: posts
-	// rpc GetPostDetail(GetPostRequest) returns (Post) {}
+	rpc CreatePost(PostDetailInfo) returns (ActionResult) {}
+	rpc GetPost(PostInfo) returns (PostDetailInfo) {}
+	rpc EditPost(PostDetailInfo) returns (ActionResult) {}
+	rpc DeletePost(PostInfo) returns (ActionResult) {}
+	rpc CommentPost(CommentInfo) returns (ActionResult) {}
+	rpc LikePost(LikeInfo) returns (ActionResult) {}
 
 	// TODO: Create more APIs
 }
@@ -51,26 +56,46 @@ message UserResult {
 	UserDetailInfo info = 2;
 }
 
-message UserFollower {
+message UserFollowerInfo {
 	repeated UserInfo followers = 1;
 }
 
-message UserAndFollower {
+message UserAndFollowerInfo {
 	UserInfo user = 1;
 	UserInfo follower = 2;
 }
 
-message GetPostRequest {
-	int64 post_id = 1;
+message UserPostDetailInfo {
+	repeated PostDetailInfo posts = 1;
 }
 
-message Post {
+message PostInfo {
+	int64 post_id = 1;
+	int64 user_id = 2;
+}
+
+message CommentInfo {
+	int64 comment_id = 1;
+	int64 post_id = 2;
+	int64 user_id = 3;
+	string content = 4;
+}
+
+message LikeInfo {
+	int64 post_id = 1;
+	int64 user_id = 2;
+}
+
+message PostDetailInfo {
 	int64 post_id = 1;
 	int64 user_id = 2;
 	string content_text = 3;
-	string content_image_path = 4;
+	repeated string content_image_path = 4;
 	bool visible = 5;
 	int64 created_at = 6;
+
+	repeated CommentInfo comments = 7;
+	repeated LikeInfo likes = 8;
 }
 
 message ActionResult {

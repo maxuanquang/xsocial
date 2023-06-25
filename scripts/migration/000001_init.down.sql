@@ -1,3 +1,5 @@
+DROP TRIGGER IF EXISTS `delete_post`;
+
 DROP TABLE IF EXISTS `following`;
 
 DROP TABLE IF EXISTS `like`;

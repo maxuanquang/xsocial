@@ -25,6 +25,13 @@ const (
 	AuthenticateAndPost_GetUserFollower_FullMethodName         = "/authen_and_post.AuthenticateAndPost/GetUserFollower"
 	AuthenticateAndPost_FollowUser_FullMethodName              = "/authen_and_post.AuthenticateAndPost/FollowUser"
 	AuthenticateAndPost_UnfollowUser_FullMethodName            = "/authen_and_post.AuthenticateAndPost/UnfollowUser"
+	AuthenticateAndPost_GetUserPost_FullMethodName             = "/authen_and_post.AuthenticateAndPost/GetUserPost"
+	AuthenticateAndPost_CreatePost_FullMethodName              = "/authen_and_post.AuthenticateAndPost/CreatePost"
+	AuthenticateAndPost_GetPost_FullMethodName                 = "/authen_and_post.AuthenticateAndPost/GetPost"
+	AuthenticateAndPost_EditPost_FullMethodName                = "/authen_and_post.AuthenticateAndPost/EditPost"
+	AuthenticateAndPost_DeletePost_FullMethodName              = "/authen_and_post.AuthenticateAndPost/DeletePost"
+	AuthenticateAndPost_CommentPost_FullMethodName             = "/authen_and_post.AuthenticateAndPost/CommentPost"
+	AuthenticateAndPost_LikePost_FullMethodName                = "/authen_and_post.AuthenticateAndPost/LikePost"
 )
 
 // AuthenticateAndPostClient is the client API for AuthenticateAndPost service.
@@ -36,9 +43,17 @@ type AuthenticateAndPostClient interface {
 	CreateUser(ctx context.Context, in *UserDetailInfo, opts ...grpc.CallOption) (*UserResult, error)
 	EditUser(ctx context.Context, in *UserDetailInfo, opts ...grpc.CallOption) (*UserResult, error)
 	// Group: friends
-	GetUserFollower(ctx context.Context, in *UserInfo, opts ...grpc.CallOption) (*UserFollower, error)
-	FollowUser(ctx context.Context, in *UserAndFollower, opts ...grpc.CallOption) (*ActionResult, error)
-	UnfollowUser(ctx context.Context, in *UserAndFollower, opts ...grpc.CallOption) (*ActionResult, error)
+	GetUserFollower(ctx context.Context, in *UserInfo, opts ...grpc.CallOption) (*UserFollowerInfo, error)
+	FollowUser(ctx context.Context, in *UserAndFollowerInfo, opts ...grpc.CallOption) (*ActionResult, error)
+	UnfollowUser(ctx context.Context, in *UserAndFollowerInfo, opts ...grpc.CallOption) (*ActionResult, error)
+	GetUserPost(ctx context.Context, in *UserInfo, opts ...grpc.CallOption) (*UserPostDetailInfo, error)
+	// Group: posts
+	CreatePost(ctx context.Context, in *PostDetailInfo, opts ...grpc.CallOption) (*ActionResult, error)
+	GetPost(ctx context.Context, in *PostInfo, opts ...grpc.CallOption) (*PostDetailInfo, error)
+	EditPost(ctx context.Context, in *PostDetailInfo, opts ...grpc.CallOption) (*ActionResult, error)
+	DeletePost(ctx context.Context, in *PostInfo, opts ...grpc.CallOption) (*ActionResult, error)
+	CommentPost(ctx context.Context, in *CommentInfo, opts ...grpc.CallOption) (*ActionResult, error)
+	LikePost(ctx context.Context, in *LikeInfo, opts ...grpc.CallOption) (*ActionResult, error)
 }
 
 type authenticateAndPostClient struct {
@@ -76,8 +91,8 @@ func (c *authenticateAndPostClient) EditUser(ctx context.Context, in *UserDetail
 	return out, nil
 }
 
-func (c *authenticateAndPostClient) GetUserFollower(ctx context.Context, in *UserInfo, opts ...grpc.CallOption) (*UserFollower, error) {
-	out := new(UserFollower)
+func (c *authenticateAndPostClient) GetUserFollower(ctx context.Context, in *UserInfo, opts ...grpc.CallOption) (*UserFollowerInfo, error) {
+	out := new(UserFollowerInfo)
 	err := c.cc.Invoke(ctx, AuthenticateAndPost_GetUserFollower_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -85,7 +100,7 @@ func (c *authenticateAndPostClient) GetUserFollower(ctx context.Context, in *Use
 	return out, nil
 }
 
-func (c *authenticateAndPostClient) FollowUser(ctx context.Context, in *UserAndFollower, opts ...grpc.CallOption) (*ActionResult, error) {
+func (c *authenticateAndPostClient) FollowUser(ctx context.Context, in *UserAndFollowerInfo, opts ...grpc.CallOption) (*ActionResult, error) {
 	out := new(ActionResult)
 	err := c.cc.Invoke(ctx, AuthenticateAndPost_FollowUser_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -94,9 +109,72 @@ func (c *authenticateAndPostClient) FollowUser(ctx context.Context, in *UserAndF
 	return out, nil
 }
 
-func (c *authenticateAndPostClient) UnfollowUser(ctx context.Context, in *UserAndFollower, opts ...grpc.CallOption) (*ActionResult, error) {
+func (c *authenticateAndPostClient) UnfollowUser(ctx context.Context, in *UserAndFollowerInfo, opts ...grpc.CallOption) (*ActionResult, error) {
 	out := new(ActionResult)
 	err := c.cc.Invoke(ctx, AuthenticateAndPost_UnfollowUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticateAndPostClient) GetUserPost(ctx context.Context, in *UserInfo, opts ...grpc.CallOption) (*UserPostDetailInfo, error) {
+	out := new(UserPostDetailInfo)
+	err := c.cc.Invoke(ctx, AuthenticateAndPost_GetUserPost_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticateAndPostClient) CreatePost(ctx context.Context, in *PostDetailInfo, opts ...grpc.CallOption) (*ActionResult, error) {
+	out := new(ActionResult)
+	err := c.cc.Invoke(ctx, AuthenticateAndPost_CreatePost_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticateAndPostClient) GetPost(ctx context.Context, in *PostInfo, opts ...grpc.CallOption) (*PostDetailInfo, error) {
+	out := new(PostDetailInfo)
+	err := c.cc.Invoke(ctx, AuthenticateAndPost_GetPost_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticateAndPostClient) EditPost(ctx context.Context, in *PostDetailInfo, opts ...grpc.CallOption) (*ActionResult, error) {
+	out := new(ActionResult)
+	err := c.cc.Invoke(ctx, AuthenticateAndPost_EditPost_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticateAndPostClient) DeletePost(ctx context.Context, in *PostInfo, opts ...grpc.CallOption) (*ActionResult, error) {
+	out := new(ActionResult)
+	err := c.cc.Invoke(ctx, AuthenticateAndPost_DeletePost_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticateAndPostClient) CommentPost(ctx context.Context, in *CommentInfo, opts ...grpc.CallOption) (*ActionResult, error) {
+	out := new(ActionResult)
+	err := c.cc.Invoke(ctx, AuthenticateAndPost_CommentPost_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticateAndPostClient) LikePost(ctx context.Context, in *LikeInfo, opts ...grpc.CallOption) (*ActionResult, error) {
+	out := new(ActionResult)
+	err := c.cc.Invoke(ctx, AuthenticateAndPost_LikePost_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,9 +190,17 @@ type AuthenticateAndPostServer interface {
 	CreateUser(context.Context, *UserDetailInfo) (*UserResult, error)
 	EditUser(context.Context, *UserDetailInfo) (*UserResult, error)
 	// Group: friends
-	GetUserFollower(context.Context, *UserInfo) (*UserFollower, error)
-	FollowUser(context.Context, *UserAndFollower) (*ActionResult, error)
-	UnfollowUser(context.Context, *UserAndFollower) (*ActionResult, error)
+	GetUserFollower(context.Context, *UserInfo) (*UserFollowerInfo, error)
+	FollowUser(context.Context, *UserAndFollowerInfo) (*ActionResult, error)
+	UnfollowUser(context.Context, *UserAndFollowerInfo) (*ActionResult, error)
+	GetUserPost(context.Context, *UserInfo) (*UserPostDetailInfo, error)
+	// Group: posts
+	CreatePost(context.Context, *PostDetailInfo) (*ActionResult, error)
+	GetPost(context.Context, *PostInfo) (*PostDetailInfo, error)
+	EditPost(context.Context, *PostDetailInfo) (*ActionResult, error)
+	DeletePost(context.Context, *PostInfo) (*ActionResult, error)
+	CommentPost(context.Context, *CommentInfo) (*ActionResult, error)
+	LikePost(context.Context, *LikeInfo) (*ActionResult, error)
 	mustEmbedUnimplementedAuthenticateAndPostServer()
 }
 
@@ -131,14 +217,35 @@ func (UnimplementedAuthenticateAndPostServer) CreateUser(context.Context, *UserD
 func (UnimplementedAuthenticateAndPostServer) EditUser(context.Context, *UserDetailInfo) (*UserResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EditUser not implemented")
 }
-func (UnimplementedAuthenticateAndPostServer) GetUserFollower(context.Context, *UserInfo) (*UserFollower, error) {
+func (UnimplementedAuthenticateAndPostServer) GetUserFollower(context.Context, *UserInfo) (*UserFollowerInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserFollower not implemented")
 }
-func (UnimplementedAuthenticateAndPostServer) FollowUser(context.Context, *UserAndFollower) (*ActionResult, error) {
+func (UnimplementedAuthenticateAndPostServer) FollowUser(context.Context, *UserAndFollowerInfo) (*ActionResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FollowUser not implemented")
 }
-func (UnimplementedAuthenticateAndPostServer) UnfollowUser(context.Context, *UserAndFollower) (*ActionResult, error) {
+func (UnimplementedAuthenticateAndPostServer) UnfollowUser(context.Context, *UserAndFollowerInfo) (*ActionResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnfollowUser not implemented")
+}
+func (UnimplementedAuthenticateAndPostServer) GetUserPost(context.Context, *UserInfo) (*UserPostDetailInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserPost not implemented")
+}
+func (UnimplementedAuthenticateAndPostServer) CreatePost(context.Context, *PostDetailInfo) (*ActionResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePost not implemented")
+}
+func (UnimplementedAuthenticateAndPostServer) GetPost(context.Context, *PostInfo) (*PostDetailInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPost not implemented")
+}
+func (UnimplementedAuthenticateAndPostServer) EditPost(context.Context, *PostDetailInfo) (*ActionResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EditPost not implemented")
+}
+func (UnimplementedAuthenticateAndPostServer) DeletePost(context.Context, *PostInfo) (*ActionResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePost not implemented")
+}
+func (UnimplementedAuthenticateAndPostServer) CommentPost(context.Context, *CommentInfo) (*ActionResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CommentPost not implemented")
+}
+func (UnimplementedAuthenticateAndPostServer) LikePost(context.Context, *LikeInfo) (*ActionResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LikePost not implemented")
 }
 func (UnimplementedAuthenticateAndPostServer) mustEmbedUnimplementedAuthenticateAndPostServer() {}
 
@@ -226,7 +333,7 @@ func _AuthenticateAndPost_GetUserFollower_Handler(srv interface{}, ctx context.C
 }
 
 func _AuthenticateAndPost_FollowUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserAndFollower)
+	in := new(UserAndFollowerInfo)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -238,13 +345,13 @@ func _AuthenticateAndPost_FollowUser_Handler(srv interface{}, ctx context.Contex
 		FullMethod: AuthenticateAndPost_FollowUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthenticateAndPostServer).FollowUser(ctx, req.(*UserAndFollower))
+		return srv.(AuthenticateAndPostServer).FollowUser(ctx, req.(*UserAndFollowerInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _AuthenticateAndPost_UnfollowUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserAndFollower)
+	in := new(UserAndFollowerInfo)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -256,7 +363,133 @@ func _AuthenticateAndPost_UnfollowUser_Handler(srv interface{}, ctx context.Cont
 		FullMethod: AuthenticateAndPost_UnfollowUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthenticateAndPostServer).UnfollowUser(ctx, req.(*UserAndFollower))
+		return srv.(AuthenticateAndPostServer).UnfollowUser(ctx, req.(*UserAndFollowerInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticateAndPost_GetUserPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticateAndPostServer).GetUserPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticateAndPost_GetUserPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticateAndPostServer).GetUserPost(ctx, req.(*UserInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticateAndPost_CreatePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostDetailInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticateAndPostServer).CreatePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticateAndPost_CreatePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticateAndPostServer).CreatePost(ctx, req.(*PostDetailInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticateAndPost_GetPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticateAndPostServer).GetPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticateAndPost_GetPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticateAndPostServer).GetPost(ctx, req.(*PostInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticateAndPost_EditPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostDetailInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticateAndPostServer).EditPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticateAndPost_EditPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticateAndPostServer).EditPost(ctx, req.(*PostDetailInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticateAndPost_DeletePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticateAndPostServer).DeletePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticateAndPost_DeletePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticateAndPostServer).DeletePost(ctx, req.(*PostInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticateAndPost_CommentPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CommentInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticateAndPostServer).CommentPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticateAndPost_CommentPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticateAndPostServer).CommentPost(ctx, req.(*CommentInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticateAndPost_LikePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LikeInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticateAndPostServer).LikePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticateAndPost_LikePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticateAndPostServer).LikePost(ctx, req.(*LikeInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -291,6 +524,34 @@ var AuthenticateAndPost_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UnfollowUser",
 			Handler:    _AuthenticateAndPost_UnfollowUser_Handler,
+		},
+		{
+			MethodName: "GetUserPost",
+			Handler:    _AuthenticateAndPost_GetUserPost_Handler,
+		},
+		{
+			MethodName: "CreatePost",
+			Handler:    _AuthenticateAndPost_CreatePost_Handler,
+		},
+		{
+			MethodName: "GetPost",
+			Handler:    _AuthenticateAndPost_GetPost_Handler,
+		},
+		{
+			MethodName: "EditPost",
+			Handler:    _AuthenticateAndPost_EditPost_Handler,
+		},
+		{
+			MethodName: "DeletePost",
+			Handler:    _AuthenticateAndPost_DeletePost_Handler,
+		},
+		{
+			MethodName: "CommentPost",
+			Handler:    _AuthenticateAndPost_CommentPost_Handler,
+		},
+		{
+			MethodName: "LikePost",
+			Handler:    _AuthenticateAndPost_LikePost_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -2,18 +2,21 @@ package types
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
-// CREATE TABLE IF NOT EXISTS `user`  (
+// CREATE TABLE IF NOT EXISTS `user` (
 //     id BIGINT AUTO_INCREMENT,
 //     hashed_password VARCHAR(1000) NOT NULL,
-//     salt VARCHAR(1000) NOT NULL,
+//     salt VARBINARY(1000) NOT NULL,
 //     first_name VARCHAR(50) NOT NULL,
 //     last_name VARCHAR(50) NOT NULL,
 //     dob DATE NOT NULL,
 //     email VARCHAR(100) NOT NULL,
 //     user_name VARCHAR(50) UNIQUE NOT NULL,
-//     PRIMARY KEY (id)
+//     PRIMARY KEY (id),
+//     INDEX idx_username (user_name)
 // );
 
 type User struct {
@@ -23,32 +26,56 @@ type User struct {
 	FirstName      string    `gorm:"column:first_name;type:varchar(50);not null"`
 	LastName       string    `gorm:"column:last_name;type:varchar(50);not null"`
 	DOB            time.Time `gorm:"column:dob;type:date;not null"`
-	Email          string    `gorm:"column:email;type:varchar(100);not null"`
+	Email          string    `gorm:"column:email;type:varchar(100);unique;not null"`
 	UserName       string    `gorm:"column:user_name;type:varchar(50);unique;not null"`
+
+	Following []*User `gorm:"many2many:following;foreignKey:id;joinForeignKey:user_id;References:id;joinReferences:follower_id"`
+	Follower  []*User `gorm:"many2many:following;foreignKey:id;joinForeignKey:follower_id;References:id;joinReferences:user_id"`
 }
 
 func (User) TableName() string {
 	return "user"
 }
 
+// CREATE TABLE IF NOT EXISTS `following` (
+//     user_id BIGINT NOT NULL,
+//     follower_id BIGINT NOT NULL,
+//     PRIMARY KEY (user_id, follower_id),
+//     FOREIGN KEY (user_id) REFERENCES `user`(id),
+//     FOREIGN KEY (follower_id) REFERENCES `user`(id)
+// );
+
+type Following struct {
+	UserID     int64 `gorm:"column:user_id;type:bigint;primaryKey"`
+	FollowerID int64 `gorm:"column:follower_id;type:bigint;primaryKey"`
+
+	User     User `gorm:"foreignKey:user_id;references:id"`
+	Follower User `gorm:"foreignKey:follower_id;references:id"`
+}
+
+func (Following) TableName() string {
+	return "following"
+}
+
 // CREATE TABLE IF NOT EXISTS `post` (
 //     id BIGINT AUTO_INCREMENT,
+//     created_at TIMESTAMP NOT NULL,
+//     updated_at TIMESTAMP NOT NULL,
+//     deleted_at TIMESTAMP NOT NULL,
 //     user_id BIGINT NOT NULL,
 //     content_text TEXT(100000) NOT NULL,
 //     content_image_path VARCHAR(1000),
-//     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
 //     `visible` BOOLEAN NOT NULL,
 //     PRIMARY KEY (id),
 //     FOREIGN KEY (user_id) REFERENCES `user`(id)
 // );
 
 type Post struct {
-	ID               int64     `gorm:"column:id;type:bigint;primaryKey;autoIncrement"`
-	UserID           int64     `gorm:"column:user_id;type:bigint;not null"`
-	ContentText      string    `gorm:"column:content_text;type:text(100000);not null"`
-	ContentImagePath string    `gorm:"column:content_image_path;type:varchar(1000)"`
-	CreatedAt        time.Time `gorm:"column:created_at;type:datetime;default:current_timestamp;not null"`
-	Visible          bool      `gorm:"column:visible;type:boolean;not null"`
+	gorm.Model
+	UserID           int64  `gorm:"column:user_id;type:bigint;not null"`
+	ContentText      string `gorm:"column:content_text;type:text(100000);not null"`
+	ContentImagePath string `gorm:"column:content_image_path;type:text(1000)"`
+	Visible          bool   `gorm:"column:visible;type:boolean;not null"`
 
 	User User `gorm:"foreignKey:user_id;references:id"`
 }
@@ -59,21 +86,22 @@ func (Post) TableName() string {
 
 // CREATE TABLE IF NOT EXISTS `comment` (
 //     id BIGINT AUTO_INCREMENT,
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+//     deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 //     post_id BIGINT NOT NULL,
 //     user_id BIGINT NOT NULL,
 //     content TEXT(100000) NOT NULL,
-//     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
 //     PRIMARY KEY (id),
 //     FOREIGN KEY (post_id) REFERENCES `post`(id),
 //     FOREIGN KEY (user_id) REFERENCES `user`(id)
 // );
 
 type Comment struct {
-	ID        int64     `gorm:"column:id;type:bigint;primaryKey;autoIncrement"`
-	PostID    int64     `gorm:"column:post_id;type:bigint;not null"`
-	UserID    int64     `gorm:"column:user_id;type:bigint;not null"`
-	Content   string    `gorm:"column:content;type:text(100000);not null"`
-	CreatedAt time.Time `gorm:"column:created_at;type:datetime;not null;default:current_timestamp"`
+	gorm.Model
+	PostID  int64  `gorm:"column:post_id;type:bigint;not null"`
+	UserID  int64  `gorm:"column:user_id;type:bigint;not null"`
+	Content string `gorm:"column:content;type:text(100000);not null"`
 
 	Post Post `gorm:"foreignKey:post_id;references:id"`
 	User User `gorm:"foreignKey:user_id;references:id"`
@@ -86,41 +114,25 @@ func (Comment) TableName() string {
 // CREATE TABLE IF NOT EXISTS `like` (
 //     post_id BIGINT NOT NULL,
 //     user_id BIGINT NOT NULL,
-//     created_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+//     deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+//     PRIMARY KEY (post_id, user_id),
 //     FOREIGN KEY (post_id) REFERENCES `post`(id),
-//     FOREIGN KEY (user_id) REFERENCES `user`(id),
-//     CONSTRAINT unique_post_id_user_id UNIQUE (post_id, user_id)
+//     FOREIGN KEY (user_id) REFERENCES `user`(id)
 // );
 
 type Like struct {
-	PostID    int64     `gorm:"column:post_id;type:bigint;not null;index:unique_post_id_user_id,unique"`
-	UserID    int64     `gorm:"column:user_id;type:bigint;not null;index:unique_post_id_user_id,unique"`
-	CreatedAt time.Time `gorm:"column:created_at;type:datetime;not null;default:current_timestamp"`
+	PostID    int64     `gorm:"column:post_id;type:bigint;primaryKey"`
+	UserID    int64     `gorm:"column:user_id;type:bigint;primaryKey"`
+	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;default:current_timestamp"`
+	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;default:current_timestamp"`
+	DeletedAt time.Time `gorm:"column:deleted_at;type:timestamp;not null;default:current_timestamp"`
 
-	Post Post `gorm:"constraint:foreignKey:post_id;references:id"`
+	Post Post `gorm:"foreignKey:post_id;references:id"`
 	User User `gorm:"foreignKey:user_id;references:id"`
 }
 
 func (Like) TableName() string {
 	return "like"
-}
-
-// CREATE TABLE IF NOT EXISTS `following` (
-//     user_id BIGINT NOT NULL,
-//     follower_id BIGINT NOT NULL,
-//     FOREIGN KEY (user_id) REFERENCES `user`(id),
-//     FOREIGN KEY (follower_id) REFERENCES `user`(id),
-//     CONSTRAINT unique_user_id_follower_id UNIQUE (user_id, follower_id)
-// );
-
-type Following struct {
-	UserID     int64 `gorm:"column:user_id;type:bigint;not null;index:unique_user_id_follower_id,unique"`
-	FollowerID int64 `gorm:"column:follower_id;type:bigint;not null;index:unique_user_id_follower_id,unique"`
-
-	User     User `gorm:"foreignKey:user_id;references:id"`
-	Follower User `gorm:"foreignKey:follower_id;references:id"`
-}
-
-func (Following) TableName() string {
-	return "following"
 }
