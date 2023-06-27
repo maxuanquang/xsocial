@@ -14,7 +14,7 @@ import (
 
 func main() {
 	// Flags
-	cfgPath := flag.String("conf", "configs/files/test.yml", "Path to config file for this service")
+	cfgPath := flag.String("conf", "config.yml", "Path to config file for this service")
 
 	// Load configurations
 	cfg, err := configs.GetAuthenticateAndPostConfig(*cfgPath)

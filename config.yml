@@ -1,12 +1,13 @@
 # Common configurations for aap and nf
 mysql: &MYSQL
-  dsn: "root:123456@tcp(mysql:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "quangmx:2511@tcp(192.168.0.103:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local"
   defaultStringSize: 256
   disableDatetimePrecision: true
   dontSupportRenameIndex: true
   skipInitializeWithVersion: false
 redis: &REDIS
-  addr: redis:6379
+  addr: "192.168.0.103:6379"
+  password: "2511"
 
 # Configuration for aap service connection
 authenticate_and_post_config: &AAP
@@ -26,7 +27,7 @@ web_config:
   port: 19003
   api_version: ["v1"]
   authenticate_and_post:
-    hosts: ["aap:19001"]
+    hosts: ["192.168.0.103:19001"]
   newsfeed:
-    hosts: ["newsfeed:19002"]
+    hosts: ["192.168.0.103:19002"]
   redis: *REDIS
