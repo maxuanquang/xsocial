@@ -93,11 +93,3 @@ func validateUsername(fl validator.FieldLevel) bool {
 	}
 	return alphaNumRegex.MatchString(fl.Field().String())
 }
-
-// func validateVisible(fl validator.FieldLevel) bool {
-// 	if fl.Field().Bool() || !fl.Field().Bool() {
-// 		return true
-// 	}
-
-// 	return false
-// }

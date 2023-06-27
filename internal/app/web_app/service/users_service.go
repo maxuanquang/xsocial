@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -17,12 +16,12 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 	var jsonRequest types.LoginRequest
 	err := ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 	err = validate.Struct(jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -32,7 +31,7 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 		UserPassword: jsonRequest.Password,
 	})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -44,19 +43,19 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 		"userId", authentication.GetInfo().GetUserId(),
 		"userName", authentication.GetInfo().GetUserName()).Err()
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 	err = svc.RedisClient.Expire(ctx, sessionId, time.Minute*5).Err()
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
 	// Set sessionID cookie
 	ctx.SetCookie("session_id", sessionId, 300, "", "", false, false)
 
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "Log in succeeded"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 func (svc *WebService) CreateUser(ctx *gin.Context) {
@@ -64,12 +63,12 @@ func (svc *WebService) CreateUser(ctx *gin.Context) {
 	var jsonRequest types.CreateUserRequest
 	err := ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 	err = validate.Struct(jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -84,18 +83,18 @@ func (svc *WebService) CreateUser(ctx *gin.Context) {
 		Email:        jsonRequest.Email,
 	})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Create user failed"})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "Failed"})
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "Create user succeeded"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 func (svc *WebService) EditUser(ctx *gin.Context) {
 	// Check authorization
 	_, _, userName, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -103,12 +102,12 @@ func (svc *WebService) EditUser(ctx *gin.Context) {
 	var jsonRequest types.EditUserRequest
 	err = ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 	err = validate.Struct(jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -123,9 +122,9 @@ func (svc *WebService) EditUser(ctx *gin.Context) {
 		Email:        jsonRequest.Email,
 	})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Edit user failed: %v", err)})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusAccepted, gin.H{"message": "Edit user succeeded"})
+	ctx.IndentedJSON(http.StatusAccepted, types.MessageResponse{Message: "OK"})
 }

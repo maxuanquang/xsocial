@@ -14,7 +14,7 @@ func (svc *WebService) CreatePost(ctx *gin.Context) {
 	// Check session
 	_, userId, _, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -22,12 +22,12 @@ func (svc *WebService) CreatePost(ctx *gin.Context) {
 	var jsonRequest types.CreatePostRequest
 	err = ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 	err = validate.Struct(jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -39,12 +39,12 @@ func (svc *WebService) CreatePost(ctx *gin.Context) {
 		Visible:          true,
 	})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
 	// Return message
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 func (svc *WebService) GetPost(ctx *gin.Context) {
@@ -52,18 +52,18 @@ func (svc *WebService) GetPost(ctx *gin.Context) {
 	stringPostId := ctx.Param("post_id")
 	postId, err := strconv.Atoi(stringPostId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Wrong post_id"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "Wrong post_id"})
 		return
 	}
 
 	// Call gprc service
 	postDetailInfo, err := svc.AuthenticateAndPostClient.GetPost(ctx, &pb_aap.PostInfo{PostId: int64(postId)})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Something is wrong"})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "Something is wrong"})
 		return
 	}
 	if !postDetailInfo.GetVisible() {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Post is deleted"})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "Post is not available"})
 		return
 	}
 
@@ -74,7 +74,7 @@ func (svc *WebService) EditPost(ctx *gin.Context) {
 	// Check session
 	_, userId, _, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -82,7 +82,7 @@ func (svc *WebService) EditPost(ctx *gin.Context) {
 	stringPostId := ctx.Param("post_id")
 	postId, err := strconv.Atoi(stringPostId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Wrong post_id"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "Wrong post_id"})
 		return
 	}
 
@@ -90,12 +90,12 @@ func (svc *WebService) EditPost(ctx *gin.Context) {
 	var jsonRequest types.EditPostRequest
 	err = ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 	err = validate.Struct(jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -108,19 +108,19 @@ func (svc *WebService) EditPost(ctx *gin.Context) {
 		Visible:          true,
 	})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
 	// Return message
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 func (svc *WebService) DeletePost(ctx *gin.Context) {
 	// Check session
 	_, userId, _, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -128,7 +128,7 @@ func (svc *WebService) DeletePost(ctx *gin.Context) {
 	stringPostId := ctx.Param("post_id")
 	postId, err := strconv.Atoi(stringPostId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Wrong post_id"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "Wrong post_id"})
 		return
 	}
 
@@ -138,12 +138,12 @@ func (svc *WebService) DeletePost(ctx *gin.Context) {
 		UserId: int64(userId),
 	})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
 	// Return message
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 // POST: ver/posts/:post_id/comment -> msg
@@ -151,7 +151,7 @@ func (svc *WebService) CommentPost(ctx *gin.Context) {
 	// Check session
 	_, userId, _, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -159,7 +159,7 @@ func (svc *WebService) CommentPost(ctx *gin.Context) {
 	stringPostId := ctx.Param("post_id")
 	postId, err := strconv.Atoi(stringPostId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Wrong post_id"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "Wrong post_id"})
 		return
 	}
 
@@ -167,12 +167,12 @@ func (svc *WebService) CommentPost(ctx *gin.Context) {
 	var jsonRequest types.CommentPostRequest
 	err = ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 	err = validate.Struct(jsonRequest)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -184,19 +184,19 @@ func (svc *WebService) CommentPost(ctx *gin.Context) {
 			Content: jsonRequest.Content,
 		})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
 	// Return message
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 func (svc *WebService) LikePost(ctx *gin.Context) {
 	// Check session
 	_, userId, _, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -204,7 +204,7 @@ func (svc *WebService) LikePost(ctx *gin.Context) {
 	stringPostId := ctx.Param("post_id")
 	postId, err := strconv.Atoi(stringPostId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Wrong post_id"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "Wrong post_id"})
 		return
 	}
 
@@ -215,12 +215,12 @@ func (svc *WebService) LikePost(ctx *gin.Context) {
 			UserId: int64(userId),
 		})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
 	// Return message
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 func (svc *WebService) newJSONPost(postDetailInfo *pb_aap.PostDetailInfo) gin.H {

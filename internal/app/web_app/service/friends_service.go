@@ -1,12 +1,11 @@
 package service
 
 import (
-	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/maxuanquang/social-network/internal/pkg/types"
+	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 	"net/http"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
-	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 )
 
 func (svc *WebService) GetUserFollower(ctx *gin.Context) {
@@ -14,7 +13,7 @@ func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 	stringUserId := ctx.Param("user_id")
 	userId, err := strconv.Atoi(stringUserId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "ID is not existed"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user_id does not exist"})
 		return
 	}
 
@@ -23,7 +22,7 @@ func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 		UserId: int64(userId),
 	})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Get user follower failed: %v", err)})
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -33,14 +32,14 @@ func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 		followers = append(followers, map[string]interface{}{"id": follower.UserId, "username": follower.UserName})
 	}
 
-	ctx.IndentedJSON(http.StatusAccepted, gin.H{"message": "Get followers succeeded", "followers": followers})
+	ctx.IndentedJSON(http.StatusAccepted, gin.H{"followers": followers})
 }
 
 func (svc *WebService) FollowUser(ctx *gin.Context) {
 	// Check sessionId authentication
 	_, followerId, _, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -48,7 +47,7 @@ func (svc *WebService) FollowUser(ctx *gin.Context) {
 	stringUserId := ctx.Param("user_id")
 	userId, err := strconv.Atoi(stringUserId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "ID is not existed"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user_id does not exist"})
 		return
 	}
 
@@ -59,18 +58,18 @@ func (svc *WebService) FollowUser(ctx *gin.Context) {
 			Follower: &pb_aap.UserInfo{UserId: int64(followerId)},
 		})
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 func (svc *WebService) UnfollowUser(ctx *gin.Context) {
 	// Check sessionId authentication
 	_, followerId, _, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -78,7 +77,7 @@ func (svc *WebService) UnfollowUser(ctx *gin.Context) {
 	stringUserId := ctx.Param("user_id")
 	userId, err := strconv.Atoi(stringUserId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "ID is not existed"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user_id does not exist"})
 		return
 	}
 
@@ -90,11 +89,11 @@ func (svc *WebService) UnfollowUser(ctx *gin.Context) {
 		},
 	)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
 func (svc *WebService) GetUserPost(ctx *gin.Context) {
@@ -102,7 +101,7 @@ func (svc *WebService) GetUserPost(ctx *gin.Context) {
 	stringUserId := ctx.Param("user_id")
 	userId, err := strconv.Atoi(stringUserId)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": "ID is not existed"})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user_id does not exist"})
 		return
 	}
 
@@ -113,7 +112,7 @@ func (svc *WebService) GetUserPost(ctx *gin.Context) {
 		},
 	)
 	if err != nil {
-		ctx.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
@@ -123,5 +122,5 @@ func (svc *WebService) GetUserPost(ctx *gin.Context) {
 		posts = append(posts, svc.newJSONPost(postDetailInfo))
 	}
 
-	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "OK", "posts": posts})
+	ctx.IndentedJSON(http.StatusOK, gin.H{"posts": posts})
 }
