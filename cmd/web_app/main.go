@@ -2,11 +2,15 @@ package main
 
 import (
 	"flag"
-	"log"
 	"github.com/maxuanquang/social-network/configs"
 	"github.com/maxuanquang/social-network/internal/app/web_app"
+	"log"
+	_ "github.com/maxuanquang/social-network/docs"
 )
 
+// @title 			Gin Social Network Service
+// @version 		1.0
+// @description 	A simple social network management service API in Go using Gin framework
 func main() {
 	// Flags
 	cfgPath := flag.String("conf", "config.yml", "Path to config file for this service")

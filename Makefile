@@ -18,3 +18,15 @@ proto_newsfeed:
 	protoc --proto_path=pkg/types/proto/ --go_out=pkg/types/proto/pb/newsfeed --go_opt=paths=source_relative \
 	--go-grpc_out=pkg/types/proto/pb/newsfeed --go-grpc_opt=paths=source_relative \
 	newsfeed.proto
+
+.PHONY: vendor
+vendor:
+	go mod vendor -v
+docker_clear:
+	docker volume rm $(docker volume ls -qf dangling=true) & docker rmi $(docker images -qf "dangling=true")
+compose_up_rebuild:
+	docker compose up --build --force-recreate
+compose_up:
+	docker compose up
+gen_swagger:
+	swag init -g cmd/web_app/main.go

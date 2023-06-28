@@ -11,6 +11,18 @@ import (
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 )
 
+// CheckUserNamePassword godoc
+//
+//	@Summary		get user
+//	@Description	Check user's username and password
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			request body types.LoginRequest true "login param"
+//	@Success		200	{object} types.MessageResponse
+//	@Failure		400	{object} types.MessageResponse
+//	@Failure		500	{object} types.MessageResponse
+//	@Router			/users/login [post]
 func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 	// Validate request
 	var jsonRequest types.LoginRequest
