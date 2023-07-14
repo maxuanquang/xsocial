@@ -40,7 +40,7 @@ func NewWebController(cfg *configs.WebConfig) (*WebController, error) {
 		}
 	}
 
-	// Other supportive tools
+	// Other support tools
 	initSwagger(router)
 	initPprof(router)
 

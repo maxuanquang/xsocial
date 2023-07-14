@@ -52,8 +52,8 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 
 	// Save current sessionID and expiration time in Redis
 	err = svc.RedisClient.HSet(svc.RedisClient.Context(), sessionId,
-		"userId", authentication.GetInfo().GetUserId(),
-		"userName", authentication.GetInfo().GetUserName()).Err()
+		"id", authentication.GetInfo().GetId(),
+		"user_name", authentication.GetInfo().GetUserName()).Err()
 	if err != nil {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
@@ -139,4 +139,23 @@ func (svc *WebService) EditUser(ctx *gin.Context) {
 	}
 
 	ctx.IndentedJSON(http.StatusAccepted, types.MessageResponse{Message: "OK"})
+}
+
+func (svc *WebService) checkSessionAuthentication(ctx *gin.Context) (sessionId string, userId int, userName string, err error) {
+	sessionId, err = ctx.Cookie("session_id")
+	if err != nil {
+		return "", 0, "", err
+	}
+
+	userId, err = svc.RedisClient.HGet(svc.RedisClient.Context(), sessionId, "id").Int()
+	if err != nil {
+		return "", 0, "", err
+	}
+
+	userName, err = svc.RedisClient.HGet(svc.RedisClient.Context(), sessionId, "user_name").Result()
+	if err != nil {
+		return "", 0, "", err
+	}
+
+	return sessionId, userId, userName, nil
 }
