@@ -87,13 +87,13 @@ func (svc *NewsfeedGenerationService) processPost(jsonData []byte) {
 	}
 
 	// Try to get distributed lock
-	lockName := "lock-post-" + strconv.Itoa(int(postDetailInfo.GetId()))
+	lockName := "lock-post:" + strconv.Itoa(int(postDetailInfo.GetId()))
 	svc.acquireDistributedLock(lockName)
 	defer svc.releaseDistributedLock(lockName)
 
 	// Do following works
 	// 1. Create a post object in redis
-	postKey := "post-" + strconv.Itoa(int(postDetailInfo.GetId()))
+	postKey := "post:" + strconv.Itoa(int(postDetailInfo.GetId()))
 	mapRedisPost := svc.newMapRedisPost(&postDetailInfo)
 	_, err = svc.redisClient.HSet(context.Background(), postKey, mapRedisPost).Result()
 	if err != nil {
@@ -101,11 +101,11 @@ func (svc *NewsfeedGenerationService) processPost(jsonData []byte) {
 	}
 
 	// 2. Find followers of user that created post
-	followersKey := "followers-" + strconv.Itoa(int(postDetailInfo.UserId))
+	followersKey := "followers:" + strconv.Itoa(int(postDetailInfo.UserId))
 	numKey, _ := svc.redisClient.Exists(context.Background(), followersKey).Result()
 	if numKey == 0 {
 		userFollowersInfo, err := svc.authenticateAndPostClient.GetUserFollower(context.Background(), &pb_aap.UserInfo{
-			Id: postDetailInfo.GetId(),
+			Id: postDetailInfo.GetUserId(),
 		})
 		if err != nil {
 			panic(err)
@@ -130,7 +130,7 @@ func (svc *NewsfeedGenerationService) processPost(jsonData []byte) {
 
 	// 3. Add this post_id into followers' newsfeed
 	for _, id := range followersIDs {
-		newsfeedKey := "newsfeed-" + id
+		newsfeedKey := "newsfeed:" + id
 		_, err := svc.redisClient.RPush(context.Background(), newsfeedKey, postDetailInfo.GetId()).Result()
 		if err != nil {
 			panic(err)
@@ -170,16 +170,16 @@ func (svc *NewsfeedGenerationService) newMapRedisPost(postDetailInfo *pb_aap.Pos
 		"content_text":       postDetailInfo.GetContentText(),
 		"content_image_path": strings.Join(postDetailInfo.GetContentImagePath(), " "),
 		"visible":            postDetailInfo.GetVisible(),
-		"create_at":          postDetailInfo.GetCreatedAt(),
+		"created_at":         postDetailInfo.GetCreatedAt(),
 		"comments_ids":       strings.Join(commentsIds, " "),
-		"liked_user_ids":     strings.Join(likedUserIds, " "),
+		"liked_users_ids":    strings.Join(likedUserIds, " "),
 	}
 }
 
-func (svc *NewsfeedGenerationService) newRedisLike() map[string]interface{} {
-	panic("implement me")
-}
+// func (svc *NewsfeedGenerationService) newRedisLike() map[string]interface{} {
+// 	panic("implement me")
+// }
 
-func (svc *NewsfeedGenerationService) newRedisComment() map[string]interface{} {
-	panic("implement me")
-}
+// func (svc *NewsfeedGenerationService) newRedisComment() map[string]interface{} {
+// 	panic("implement me")
+// }

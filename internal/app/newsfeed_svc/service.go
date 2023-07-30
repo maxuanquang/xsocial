@@ -35,7 +35,7 @@ func NewNewsfeedService(cfg *configs.NewsfeedConfig) (*NewsfeedService, error) {
 
 func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.NewsfeedRequest) (*pb_nf.NewsfeedResponse, error) {
 	// Query newsfeed from redis
-	newsfeedKey := "newsfeed-" + fmt.Sprint(request.UserId)
+	newsfeedKey := "newsfeed:" + fmt.Sprint(request.UserId)
 	postsIds, err := svc.redisClient.LPopCount(svc.redisClient.Context(), newsfeedKey, 5).Result()
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.News
 	var posts []*pb_aap.PostDetailInfo
 	for _, id := range postsIds {
 		// Get post from redis
-		postKey := "post-" + id
+		postKey := "post:" + id
 		redisPost, err := svc.getPostFromRedis(ctx, postKey)
 		if err != nil {
 			return nil, err
@@ -57,7 +57,7 @@ func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.News
 		var comments []*pb_aap.CommentInfo
 		if len(redisPost.CommentsIds) > 0 {
 			for _, comment_id := range strings.Split(redisPost.CommentsIds, " ") {
-				commentKey := "comment-" + comment_id
+				commentKey := "comment:" + comment_id
 				redisComment, err := svc.getCommentFromRedis(ctx, commentKey)
 				if err != nil {
 					return nil, err
