@@ -8,22 +8,28 @@ mysql: &MYSQL
 redis: &REDIS
   addr: "192.168.0.103:6379"
   password: "2511"
+kafka: &KAFKA
+  topic: "engineerpro"
+  brokers: ["192.168.0.103:9092"]
 
 # Configuration for aap service connection
 authenticate_and_post_config: &AAP
   port: 19001
   mysql: *MYSQL
   redis: *REDIS
+  kafka: *KAFKA
 
 # Configuration for nf service connection
 newsfeed_config: &NF
   port: 19002
   mysql: *MYSQL
   redis: *REDIS
+  kafka: *KAFKA
+  authenticate_and_post:
+    hosts: ["192.168.0.103:19001"]
 
 # Configurations for web app
 web_config:
-  # Connection configs
   port: 19003
   api_version: ["v1"]
   authenticate_and_post:

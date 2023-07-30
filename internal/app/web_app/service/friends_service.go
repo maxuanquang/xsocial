@@ -1,11 +1,12 @@
 package service
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
-	"net/http"
-	"strconv"
 )
 
 func (svc *WebService) GetUserFollower(ctx *gin.Context) {
@@ -19,7 +20,7 @@ func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 
 	// Call GetUserFollower gprc service
 	userFollower, err := svc.AuthenticateAndPostClient.GetUserFollower(ctx, &pb_aap.UserInfo{
-		UserId: int64(userId),
+		Id: int64(userId),
 	})
 	if err != nil {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
@@ -29,7 +30,7 @@ func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 	// Return necessary information
 	var followers []map[string]interface{}
 	for _, follower := range userFollower.GetFollowers() {
-		followers = append(followers, map[string]interface{}{"id": follower.UserId, "username": follower.UserName})
+		followers = append(followers, map[string]interface{}{"id": follower.GetId(), "username": follower.GetUserName()})
 	}
 
 	ctx.IndentedJSON(http.StatusAccepted, gin.H{"followers": followers})
@@ -54,8 +55,8 @@ func (svc *WebService) FollowUser(ctx *gin.Context) {
 	// Call FollowUser grpc service
 	_, err = svc.AuthenticateAndPostClient.FollowUser(ctx,
 		&pb_aap.UserAndFollowerInfo{
-			User:     &pb_aap.UserInfo{UserId: int64(userId)},
-			Follower: &pb_aap.UserInfo{UserId: int64(followerId)},
+			User:     &pb_aap.UserInfo{Id: int64(userId)},
+			Follower: &pb_aap.UserInfo{Id: int64(followerId)},
 		})
 	if err != nil {
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
@@ -84,8 +85,8 @@ func (svc *WebService) UnfollowUser(ctx *gin.Context) {
 	// Call UnfollowUser grpc service
 	_, err = svc.AuthenticateAndPostClient.UnfollowUser(ctx,
 		&pb_aap.UserAndFollowerInfo{
-			User:     &pb_aap.UserInfo{UserId: int64(userId)},
-			Follower: &pb_aap.UserInfo{UserId: int64(followerId)},
+			User:     &pb_aap.UserInfo{Id: int64(userId)},
+			Follower: &pb_aap.UserInfo{Id: int64(followerId)},
 		},
 	)
 	if err != nil {
@@ -108,7 +109,7 @@ func (svc *WebService) GetUserPost(ctx *gin.Context) {
 	// Call GetUserPost grpc service
 	userPosts, err := svc.AuthenticateAndPostClient.GetUserPost(ctx,
 		&pb_aap.UserInfo{
-			UserId: int64(userId),
+			Id: int64(userId),
 		},
 	)
 	if err != nil {
@@ -119,7 +120,7 @@ func (svc *WebService) GetUserPost(ctx *gin.Context) {
 	// Return
 	var posts []gin.H
 	for _, postDetailInfo := range userPosts.Posts {
-		posts = append(posts, svc.newJSONPost(postDetailInfo))
+		posts = append(posts, svc.newMapPost(postDetailInfo))
 	}
 
 	ctx.IndentedJSON(http.StatusOK, gin.H{"posts": posts})

@@ -1,8 +1,9 @@
 package configs
 
 import (
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 )
 
 func parseConfig(cfgPath string) (*Config, error) {
@@ -27,7 +28,7 @@ type Config struct {
 	Redis               RedisConfig               `yaml:"redis"`
 	AuthenticateAndPost AuthenticateAndPostConfig `yaml:"authenticate_and_post_config"`
 	Newsfeed            NewsfeedConfig            `yaml:"newsfeed_config"`
-	WebConfig           WebConfig                 `yaml:"web_config"`
+	Web                 WebConfig                 `yaml:"web_config"`
 }
 
 type MySQLConfig struct {
@@ -43,16 +44,24 @@ type RedisConfig struct {
 	Password string `yaml:"password"`
 }
 
+type KafkaConfig struct {
+	Topic   string   `yaml:"topic"`
+	Brokers []string `yaml:"brokers"`
+}
+
 type AuthenticateAndPostConfig struct {
 	Port  int         `yaml:"port"`
 	MySQL MySQLConfig `yaml:"mysql"`
 	Redis RedisConfig `yaml:"redis"`
+	Kafka KafkaConfig `yaml:"kafka"`
 }
 
 type NewsfeedConfig struct {
-	Port  int         `yaml:"port"`
-	MySQL MySQLConfig `yaml:"mysql"`
-	Redis RedisConfig `yaml:"redis"`
+	Port                int         `yaml:"port"`
+	MySQL               MySQLConfig `yaml:"mysql"`
+	Redis               RedisConfig `yaml:"redis"`
+	Kafka               KafkaConfig `yaml:"kafka"`
+	AuthenticateAndPost HostConfig  `yaml:"authenticate_and_post"`
 }
 
 type WebConfig struct {

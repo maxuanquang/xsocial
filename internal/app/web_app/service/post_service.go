@@ -57,7 +57,7 @@ func (svc *WebService) GetPost(ctx *gin.Context) {
 	}
 
 	// Call gprc service
-	postDetailInfo, err := svc.AuthenticateAndPostClient.GetPost(ctx, &pb_aap.PostInfo{PostId: int64(postId)})
+	postDetailInfo, err := svc.AuthenticateAndPostClient.GetPost(ctx, &pb_aap.PostInfo{Id: int64(postId)})
 	if err != nil {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "Something is wrong"})
 		return
@@ -67,7 +67,7 @@ func (svc *WebService) GetPost(ctx *gin.Context) {
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusAccepted, svc.newJSONPost(postDetailInfo))
+	ctx.IndentedJSON(http.StatusAccepted, svc.newMapPost(postDetailInfo))
 }
 
 func (svc *WebService) EditPost(ctx *gin.Context) {
@@ -101,8 +101,8 @@ func (svc *WebService) EditPost(ctx *gin.Context) {
 
 	// Call grpc service
 	_, err = svc.AuthenticateAndPostClient.EditPost(ctx, &pb_aap.PostDetailInfo{
+		Id:               int64(postId),
 		UserId:           int64(userId),
-		PostId:           int64(postId),
 		ContentText:      jsonRequest.ContentText,
 		ContentImagePath: jsonRequest.ContentImagePath,
 		Visible:          true,
@@ -134,7 +134,7 @@ func (svc *WebService) DeletePost(ctx *gin.Context) {
 
 	// Call grpc service
 	_, err = svc.AuthenticateAndPostClient.DeletePost(ctx, &pb_aap.PostInfo{
-		PostId: int64(postId),
+		Id:     int64(postId),
 		UserId: int64(userId),
 	})
 	if err != nil {
@@ -223,28 +223,28 @@ func (svc *WebService) LikePost(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 }
 
-func (svc *WebService) newJSONPost(postDetailInfo *pb_aap.PostDetailInfo) gin.H {
+func (svc *WebService) newMapPost(postDetailInfo *pb_aap.PostDetailInfo) gin.H {
 	var comments []map[string]interface{}
 	for _, comment := range postDetailInfo.GetComments() {
 		comments = append(comments, map[string]interface{}{
-			"commentId": comment.GetCommentId(),
-			"userId":    comment.GetUserId(),
-			"postId":    comment.GetPostId(),
-			"content":   comment.GetContent(),
+			"id":      comment.GetId(),
+			"user_id": comment.GetUserId(),
+			"post_id": comment.GetPostId(),
+			"content": comment.GetContent(),
 		})
 	}
 
 	var likes []map[string]interface{}
 	for _, like := range postDetailInfo.GetLikes() {
 		likes = append(likes, map[string]interface{}{
-			"userId": like.GetUserId(),
-			"postId": like.GetPostId(),
+			"user_id": like.GetUserId(),
+			"post_id": like.GetPostId(),
 		})
 	}
 
 	return gin.H{
-		"postId":             postDetailInfo.GetPostId(),
-		"userId":             postDetailInfo.GetUserId(),
+		"id":                 postDetailInfo.GetId(),
+		"user_id":            postDetailInfo.GetUserId(),
 		"content_text":       postDetailInfo.GetContentText(),
 		"content_image_path": postDetailInfo.GetContentImagePath(),
 		"create_at":          postDetailInfo.GetCreatedAt(),
