@@ -33,59 +33,66 @@ type randomClient struct {
 }
 
 // Group: Users
-
-func (a *randomClient) CheckUserAuthentication(ctx context.Context, in *pb.UserInfo, opts ...grpc.CallOption) (*pb.UserResult, error) {
+func (a *randomClient) CheckUserAuthentication(ctx context.Context, in *pb.CheckUserAuthenticationRequest, opts ...grpc.CallOption) (*pb.CheckUserAuthenticationResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].CheckUserAuthentication(ctx, in, opts...)
 }
 
-func (a *randomClient) CreateUser(ctx context.Context, in *pb.UserDetailInfo, opts ...grpc.CallOption) (*pb.UserResult, error) {
+func (a *randomClient) CreateUser(ctx context.Context, in *pb.CreateUserRequest, opts ...grpc.CallOption) (*pb.CreateUserResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].CreateUser(ctx, in, opts...)
 }
 
-func (a *randomClient) EditUser(ctx context.Context, in *pb.UserDetailInfo, opts ...grpc.CallOption) (*pb.UserResult, error) {
+func (a *randomClient) EditUser(ctx context.Context, in *pb.EditUserRequest, opts ...grpc.CallOption) (*pb.EditUserResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].EditUser(ctx, in, opts...)
+}
+
+func (a *randomClient) GetUserDetailInfo(ctx context.Context, in *pb.GetUserDetailInfoRequest, opts ...grpc.CallOption) (*pb.GetUserDetailInfoResponse, error) {
+	return a.clients[rand.Intn(len(a.clients))].GetUserDetailInfo(ctx, in, opts...)
 }
 
 // Group: Friends
 
-func (a *randomClient) GetUserFollower(ctx context.Context, in *pb.UserInfo, opts ...grpc.CallOption) (*pb.UserFollowerInfo, error) {
+func (a *randomClient) GetUserFollower(ctx context.Context, in *pb.GetUserFollowerRequest, opts ...grpc.CallOption) (*pb.GetUserFollowerResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].GetUserFollower(ctx, in, opts...)
 }
 
-func (a *randomClient) FollowUser(ctx context.Context, in *pb.UserAndFollowerInfo, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+func (a *randomClient) GetUserFollowing(ctx context.Context, in *pb.GetUserFollowingRequest, opts ...grpc.CallOption) (*pb.GetUserFollowingResponse, error) {
+	return a.clients[rand.Intn(len(a.clients))].GetUserFollowing(ctx, in, opts...)
+}
+
+func (a *randomClient) FollowUser(ctx context.Context, in *pb.FollowUserRequest, opts ...grpc.CallOption) (*pb.FollowUserResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].FollowUser(ctx, in, opts...)
 }
 
-func (a *randomClient) UnfollowUser(ctx context.Context, in *pb.UserAndFollowerInfo, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+func (a *randomClient) UnfollowUser(ctx context.Context, in *pb.UnfollowUserRequest, opts ...grpc.CallOption) (*pb.UnfollowUserResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].UnfollowUser(ctx, in, opts...)
 }
 
-func (a *randomClient) GetUserPost(ctx context.Context, in *pb.UserInfo, opts ...grpc.CallOption) (*pb.UserPostDetailInfo, error) {
-	return a.clients[rand.Intn(len(a.clients))].GetUserPost(ctx, in, opts...)
+func (a *randomClient) GetUserPosts(ctx context.Context, in *pb.GetUserPostsRequest, opts ...grpc.CallOption) (*pb.GetUserPostsResponse, error) {
+	return a.clients[rand.Intn(len(a.clients))].GetUserPosts(ctx, in, opts...)
 }
 
 // Group: Posts
 
-func (a *randomClient) CreatePost(ctx context.Context, in *pb.PostDetailInfo, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+func (a *randomClient) CreatePost(ctx context.Context, in *pb.CreatePostRequest, opts ...grpc.CallOption) (*pb.CreatePostResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].CreatePost(ctx, in, opts...)
 }
 
-func (a *randomClient) GetPost(ctx context.Context, in *pb.PostInfo, opts ...grpc.CallOption) (*pb.PostDetailInfo, error) {
-	return a.clients[rand.Intn(len(a.clients))].GetPost(ctx, in, opts...)
+func (a *randomClient) GetPostDetailInfo(ctx context.Context, in *pb.GetPostDetailInfoRequest, opts ...grpc.CallOption) (*pb.GetPostDetailInfoResponse, error) {
+	return a.clients[rand.Intn(len(a.clients))].GetPostDetailInfo(ctx, in, opts...)
 }
 
-func (a *randomClient) EditPost(ctx context.Context, in *pb.PostDetailInfo, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+func (a *randomClient) EditPost(ctx context.Context, in *pb.EditPostRequest, opts ...grpc.CallOption) (*pb.EditPostResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].EditPost(ctx, in, opts...)
 }
 
-func (a *randomClient) DeletePost(ctx context.Context, in *pb.PostInfo, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+func (a *randomClient) DeletePost(ctx context.Context, in *pb.DeletePostRequest, opts ...grpc.CallOption) (*pb.DeletePostResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].DeletePost(ctx, in, opts...)
 }
 
-func (a *randomClient) CommentPost(ctx context.Context, in *pb.CommentInfo, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+func (a *randomClient) CommentPost(ctx context.Context, in *pb.CommentPostRequest, opts ...grpc.CallOption) (*pb.CommentPostResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].CommentPost(ctx, in, opts...)
 }
 
-func (a *randomClient) LikePost(ctx context.Context, in *pb.LikeInfo, opts ...grpc.CallOption) (*pb.ActionResult, error) {
+func (a *randomClient) LikePost(ctx context.Context, in *pb.LikePostRequest, opts ...grpc.CallOption) (*pb.LikePostResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].LikePost(ctx, in, opts...)
 }

@@ -3,123 +3,122 @@ package authen_and_post_svc
 import (
 	"context"
 	"errors"
+
 	"github.com/maxuanquang/social-network/internal/auth"
+	"github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 )
 
-func (a *AuthenticateAndPostService) CreateUser(ctx context.Context, info *pb_aap.UserDetailInfo) (*pb_aap.UserResult, error) {
-	existed, _ := a.checkUserName(info.GetUserName())
-	if existed {
-		return nil, errors.New("user already exist")
+func (a *AuthenticateAndPostService) CreateUser(ctx context.Context, info *pb_aap.CreateUserRequest) (*pb_aap.CreateUserResponse, error) {
+	// Check user name existence
+	exist, _ := a.findUserByUserName(info.GetUserName())
+	if exist {
+		return &pb_aap.CreateUserResponse{Status: pb_aap.CreateUserResponse_USERNAME_EXISTED}, nil
 	}
 
+	// Password hash and salt
 	salt, err := auth.GenerateRandomSalt()
 	if err != nil {
 		return nil, err
 	}
-
 	hashed_password, err := auth.HashPassword(info.GetUserPassword(), salt)
 	if err != nil {
 		return nil, err
 	}
 
-	err = a.db.Exec(
-		"insert into user (id, hashed_password, salt, first_name, last_name, dob, email, user_name) values (null, ?, ?, ?, ?, FROM_UNIXTIME(?), ?, ?)",
-		hashed_password,
-		salt,
-		info.GetFirstName(),
-		info.GetLastName(),
-		info.GetDob(),
-		info.GetEmail(),
-		info.GetUserName(),
-	).Error
-	if err != nil {
-		return nil, err
+	// Create user
+	newUser := types.User{
+		HashedPassword: hashed_password,
+		Salt:           salt,
+		FirstName:      info.GetFirstName(),
+		LastName:       info.GetLastName(),
+		DateOfBirth:    info.GetDateOfBirth().AsTime(),
+		Email:          info.GetEmail(),
+		UserName:       info.GetUserName(),
+	}
+	result := a.db.Create(&newUser)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
-	// Return the necessary user information
-	_, userModel := a.checkUserName(info.GetUserName())
-	return a.NewUserResult(userModel), nil
+	return &pb_aap.CreateUserResponse{
+		Status: pb_aap.CreateUserResponse_OK,
+		UserId: int64(newUser.ID),
+	}, nil
 }
 
-func (a *AuthenticateAndPostService) CheckUserAuthentication(ctx context.Context, info *pb_aap.UserInfo) (*pb_aap.UserResult, error) {
-	// Find user in the database using the provided information
-	existed, userModel := a.checkUserName(info.GetUserName())
-	if !existed {
-		return nil, errors.New("user does not exist")
+func (a *AuthenticateAndPostService) CheckUserAuthentication(ctx context.Context, info *pb_aap.CheckUserAuthenticationRequest) (*pb_aap.CheckUserAuthenticationResponse, error) {
+	// Check user name
+	var user types.User
+	result := a.db.Where(&types.User{UserName: info.GetUserName()}).First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return &pb_aap.CheckUserAuthenticationResponse{Status: pb_aap.CheckUserAuthenticationResponse_USER_NOT_FOUND}, nil
+	} else if result.Error != nil {
+		return nil, result.Error
 	}
 
-	// Check password matching
-	err := auth.CheckPasswordHash(userModel.HashedPassword, info.GetUserPassword(), userModel.Salt)
+	// Password matching
+	err := auth.CheckPasswordHash(user.HashedPassword, info.GetUserPassword(), user.Salt)
 	if err != nil {
-		return nil, err
+		return &pb_aap.CheckUserAuthenticationResponse{Status: pb_aap.CheckUserAuthenticationResponse_WRONG_PASSWORD}, nil
 	}
 
-	// Return the necessary user information
-	return a.NewUserResult(userModel), nil
+	return &pb_aap.CheckUserAuthenticationResponse{
+		Status: pb_aap.CheckUserAuthenticationResponse_OK,
+		UserId: int64(user.ID),
+	}, nil
 }
 
-func (a *AuthenticateAndPostService) EditUser(ctx context.Context, info *pb_aap.UserDetailInfo) (*pb_aap.UserResult, error) {
-	// Check if the username which is changing information exists in the database
-	existed, userModel := a.checkUserName(info.GetUserName())
-	if !existed {
-		return nil, errors.New("user does not exist")
+func (a *AuthenticateAndPostService) EditUser(ctx context.Context, info *pb_aap.EditUserRequest) (*pb_aap.EditUserResponse, error) {
+	exist, user := a.findUserById(info.GetUserId())
+	if !exist {
+		return &pb_aap.EditUserResponse{Status: pb_aap.EditUserResponse_USER_NOT_FOUND}, nil
 	}
-
-	// If the user exists, edit the information and return
-	var err error
-
-	// Edit password
-	if info.GetUserPassword() != "" {
+	if info.FirstName != nil {
+		user.FirstName = info.GetFirstName()
+	}
+	if info.LastName != nil {
+		user.LastName = info.GetLastName()
+	}
+	if info.DateOfBirth != nil {
+		user.DateOfBirth = info.GetDateOfBirth().AsTime()
+	}
+	if info.UserPassword != nil {
 		salt, err := auth.GenerateRandomSalt()
 		if err != nil {
 			return nil, err
 		}
-
 		hashed_password, err := auth.HashPassword(info.GetUserPassword(), salt)
 		if err != nil {
 			return nil, err
 		}
+		user.Salt = salt
+		user.HashedPassword = hashed_password
+	}
+	a.db.Save(&user)
 
-		err = a.db.Exec("update user set hashed_password = ?, salt = ? where id = ?", hashed_password, salt, userModel.ID).Error
-		if err != nil {
-			return nil, err
-		}
+	return &pb_aap.EditUserResponse{
+		Status: pb_aap.EditUserResponse_OK,
+	}, nil
+}
+
+func (a *AuthenticateAndPostService) GetUserDetailInfo(ctx context.Context, info *pb_aap.GetUserDetailInfoRequest) (*pb_aap.GetUserDetailInfoResponse, error) {
+	exist, user := a.findUserById(info.GetUserId())
+	if !exist {
+		return &pb_aap.GetUserDetailInfoResponse{Status: pb_aap.GetUserDetailInfoResponse_USER_NOT_FOUND}, nil
 	}
 
-	// Edit first_name
-	if info.GetFirstName() != "" {
-		err = a.db.Exec("update user set first_name = ? where id = ?", info.GetFirstName(), userModel.ID).Error
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Edit last_name
-	if info.GetLastName() != "" {
-		err = a.db.Exec("update user set last_name = ? where id = ?", info.GetLastName(), userModel.ID).Error
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Edit dob
-	if info.GetDob() >= -2208988800 { // 1900-01-01
-		err = a.db.Exec("update user set dob = FROM_UNIXTIME(?) where id = ?", info.GetDob(), userModel.ID).Error
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Edit email
-	if info.GetEmail() != "" {
-		err = a.db.Exec("update user set email = ? where id = ?", info.GetEmail(), userModel.ID).Error
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Return the necessary user information
-	_, userModel = a.checkUserName(info.GetUserName())
-	return a.NewUserResult(userModel), nil
+	return &pb_aap.GetUserDetailInfoResponse{
+		Status: pb_aap.GetUserDetailInfoResponse_OK,
+		User: &pb_aap.UserDetailInfo{
+			UserId:      int64(user.ID),
+			UserName:    user.UserName,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			DateOfBirth: timestamppb.New(user.DateOfBirth),
+			Email:       user.Email,
+		},
+	}, nil
 }

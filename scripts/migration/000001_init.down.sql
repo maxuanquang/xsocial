@@ -1,3 +1,5 @@
+USE engineerpro;
+
 DROP TRIGGER IF EXISTS `delete_post`;
 
 DROP TABLE IF EXISTS `following`;
