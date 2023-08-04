@@ -111,13 +111,13 @@ message GetUserFollowerResponse {
 		USER_NOT_FOUND = 1;
 	}
 	GetUserFollowerStatus status = 1;
-	repeated UserInfo followers = 2;
+	repeated int64 followersIds = 2;
 }
 
-message UserInfo {
-	string user_name = 1;
-	int64 user_id = 2;
-}
+// message UserInfo {
+// 	string user_name = 1;
+// 	int64 user_id = 2;
+// }
 
 message GetUserFollowingRequest {
 	int64 user_id = 1;
@@ -129,7 +129,7 @@ message GetUserFollowingResponse {
 		USER_NOT_FOUND = 1;
 	}
 	GetUserFollowingStatus status = 1;
-	repeated UserInfo followings = 2;
+	repeated int64 followingsIds = 2;
 }
 
 message FollowUserRequest {
@@ -170,17 +170,17 @@ message GetUserPostsResponse {
 		USER_NOT_FOUND = 1;
 	}
 	GetUserPostsStatus status = 1;
-	repeated PostInfo posts = 2;
+	repeated int64 posts_ids = 2;
 }
 
-message PostInfo {
-	int64 post_id = 1;
-	int64 user_id = 2;
-	string content_text = 3;
-	repeated string content_image_path = 4;
-	bool visible = 5;
-	google.protobuf.Timestamp created_at = 6;
-}
+// message PostInfo {
+// 	int64 post_id = 1;
+// 	int64 user_id = 2;
+// 	string content_text = 3;
+// 	repeated string content_image_path = 4;
+// 	bool visible = 5;
+// 	google.protobuf.Timestamp created_at = 6;
+// }
 
 message CreatePostRequest {
 	int64 user_id = 1;

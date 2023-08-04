@@ -2,11 +2,9 @@ package authen_and_post_svc
 
 import (
 	"context"
-	"strings"
 
 	"github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (a *AuthenticateAndPostService) GetUserFollower(ctx context.Context, info *pb_aap.GetUserFollowerRequest) (*pb_aap.GetUserFollowerResponse, error) {
@@ -23,16 +21,13 @@ func (a *AuthenticateAndPostService) GetUserFollower(ctx context.Context, info *
 		return nil, result.Error
 	}
 
-	var followers []*pb_aap.UserInfo
-	for i := range user.Followers {
-		followers = append(followers, &pb_aap.UserInfo{
-			UserId:   int64(user.Followers[i].ID),
-			UserName: user.Followers[i].UserName,
-		})
+	var followersIds []int64
+	for _, follower := range user.Followers {
+		followersIds = append(followersIds, int64(follower.ID))
 	}
 	return &pb_aap.GetUserFollowerResponse{
-		Status:    pb_aap.GetUserFollowerResponse_OK,
-		Followers: followers,
+		Status:       pb_aap.GetUserFollowerResponse_OK,
+		FollowersIds: followersIds,
 	}, nil
 }
 
@@ -50,16 +45,13 @@ func (a *AuthenticateAndPostService) GetUserFollowing(ctx context.Context, info 
 		return nil, result.Error
 	}
 
-	var followings []*pb_aap.UserInfo
-	for i := range user.Followings {
-		followings = append(followings, &pb_aap.UserInfo{
-			UserId:   int64(user.Followings[i].ID),
-			UserName: user.Followings[i].UserName,
-		})
+	var followingsIds []int64
+	for _, following := range user.Followings {
+		followingsIds = append(followingsIds, int64(following.ID))
 	}
 	return &pb_aap.GetUserFollowingResponse{
-		Status:     pb_aap.GetUserFollowingResponse_OK,
-		Followings: followings,
+		Status:        pb_aap.GetUserFollowingResponse_OK,
+		FollowingsIds: followingsIds,
 	}, nil
 }
 
@@ -133,19 +125,13 @@ func (a *AuthenticateAndPostService) GetUserPosts(ctx context.Context, info *pb_
 	a.db.Preload("Posts").First(&user, info.GetUserId())
 
 	// Return
-	var posts []*pb_aap.PostInfo
-	for i := range user.Posts {
-		posts = append(posts, &pb_aap.PostInfo{
-			PostId:           int64(user.Posts[i].ID),
-			UserId:           user.Posts[i].UserID,
-			ContentText:      user.Posts[i].ContentText,
-			ContentImagePath: strings.Split(user.Posts[i].ContentImagePath, " "),
-			CreatedAt:        timestamppb.New(user.Posts[i].CreatedAt),
-		})
+	var posts_ids []int64
+	for _, post := range user.Posts {
+		posts_ids = append(posts_ids, int64(post.ID))
 	}
 
 	return &pb_aap.GetUserPostsResponse{
-		Status: pb_aap.GetUserPostsResponse_OK,
-		Posts:  posts,
+		Status:   pb_aap.GetUserPostsResponse_OK,
+		PostsIds: posts_ids,
 	}, nil
 }

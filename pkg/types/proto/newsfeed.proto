@@ -2,8 +2,6 @@ syntax = "proto3";
 option go_package = "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed";
 package newsfeed;
 
-import "authen_and_post.proto";
-
 service Newsfeed {
     rpc GetNewsfeed(GetNewsfeedRequest) returns (GetNewsfeedResponse) {}
 }
@@ -13,5 +11,10 @@ message GetNewsfeedRequest {
 }
 
 message GetNewsfeedResponse {
-    repeated authen_and_post.Post posts = 1;
+    enum GetNewsfeedStatus {
+        OK = 0;
+        NEWSFEED_EMPTY = 1;
+    }
+    GetNewsfeedStatus status = 1;
+    repeated int64 posts_ids = 2;
 }

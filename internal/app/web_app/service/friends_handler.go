@@ -26,16 +26,8 @@ func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 		return
 	}
 
-	// Return necessary information
-	var followers []map[string]interface{}
-	for _, follower := range resp.GetFollowers() {
-		followers = append(followers, map[string]interface{}{
-			"user_id":   follower.GetUserId(),
-			"user_name": follower.GetUserName(),
-		})
-	}
-
-	ctx.IndentedJSON(http.StatusAccepted, followers)
+	// Return
+	ctx.IndentedJSON(http.StatusAccepted, resp.GetFollowersIds())
 }
 
 func (svc *WebService) GetUserFollowing(ctx *gin.Context) {
@@ -55,16 +47,8 @@ func (svc *WebService) GetUserFollowing(ctx *gin.Context) {
 		return
 	}
 
-	// Return necessary information
-	var followings []map[string]interface{}
-	for _, following := range resp.GetFollowings() {
-		followings = append(followings, map[string]interface{}{
-			"user_id":   following.GetUserId(),
-			"user_name": following.GetUserName(),
-		})
-	}
-
-	ctx.IndentedJSON(http.StatusAccepted, followings)
+	// Return
+	ctx.IndentedJSON(http.StatusAccepted, resp.GetFollowingsIds())
 }
 
 func (svc *WebService) FollowUser(ctx *gin.Context) {
@@ -168,11 +152,8 @@ func (svc *WebService) GetUserPosts(ctx *gin.Context) {
 	if resp.GetStatus() == pb_aap.GetUserPostsResponse_USER_NOT_FOUND {
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user not found"})
 	} else if resp.GetStatus() == pb_aap.GetUserPostsResponse_OK {
-		var posts []int64
-		for _, postInfo := range resp.Posts {
-			posts = append(posts, postInfo.PostId)
-		}
-		ctx.IndentedJSON(http.StatusOK, posts)
+		ctx.IndentedJSON(http.StatusOK, resp.GetPostsIds())
+		return
 	} else {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
 		return

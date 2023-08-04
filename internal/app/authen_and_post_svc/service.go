@@ -3,13 +3,15 @@ package authen_and_post_svc
 import (
 	"encoding/json"
 	"errors"
-	"log"
-	"os"
+	// "log"
+	// "os"
 
 	"github.com/maxuanquang/social-network/configs"
 	"github.com/maxuanquang/social-network/internal/pkg/types"
+	client_nfp "github.com/maxuanquang/social-network/pkg/client/newsfeed_publishing"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
-	"github.com/segmentio/kafka-go"
+	pb_nfp "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed_publishing"
+	// "github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -18,7 +20,7 @@ import (
 type AuthenticateAndPostService struct {
 	pb_aap.UnimplementedAuthenticateAndPostServer
 	db          *gorm.DB
-	kafkaWriter *kafka.Writer
+	nfPubClient pb_nfp.NewsfeedPublishingClient
 
 	logger *zap.Logger
 }
@@ -33,14 +35,10 @@ func NewAuthenticateAndPostService(cfg *configs.AuthenticateAndPostConfig) (*Aut
 		return nil, err
 	}
 
-	// Connect to kafka
-	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers: cfg.Kafka.Brokers,
-		Topic:   cfg.Kafka.Topic,
-		Logger:  log.New(os.Stdout, "kafka writer: ", 0),
-	})
-	if kafkaWriter == nil {
-		return nil, errors.New("failed connecting to kafka writer")
+	// Connect to NewsfeedPublishingClient
+	nfPubClient, err := client_nfp.NewClient(cfg.NewsfeedPublishing.Hosts)
+	if err != nil {
+		return nil, err
 	}
 
 	// Establish logger
@@ -51,7 +49,7 @@ func NewAuthenticateAndPostService(cfg *configs.AuthenticateAndPostConfig) (*Aut
 
 	return &AuthenticateAndPostService{
 		db:          db,
-		kafkaWriter: kafkaWriter,
+		nfPubClient: nfPubClient,
 		logger:      logger,
 	}, nil
 }

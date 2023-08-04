@@ -10,16 +10,16 @@ import (
 	"go.uber.org/zap"
 
 	client_aap "github.com/maxuanquang/social-network/pkg/client/authen_and_post"
-	// client_nf "github.com/maxuanquang/social-network/pkg/client/newsfeed"
+	client_nf "github.com/maxuanquang/social-network/pkg/client/newsfeed"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
-	// pb_nf "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed"
+	pb_nf "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed"
 )
 
 var validate = types.NewValidator()
 
 type WebService struct {
 	AuthenticateAndPostClient pb_aap.AuthenticateAndPostClient
-	// NewsfeedClient            pb_nf.NewsfeedClient
+	NewsfeedClient            pb_nf.NewsfeedClient
 	RedisClient               *redis.Client
 
 	Logger *zap.Logger
@@ -31,10 +31,10 @@ func NewWebService(conf *configs.WebConfig) (*WebService, error) {
 		return nil, err
 	}
 
-	// nfClient, err := client_nf.NewClient(conf.Newsfeed.Hosts)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	nfClient, err := client_nf.NewClient(conf.Newsfeed.Hosts)
+	if err != nil {
+		return nil, err
+	}
 
 	redisClient := redis.NewClient(&redis.Options{Addr: conf.Redis.Addr, Password: conf.Redis.Password})
 	if redisClient == nil {
@@ -48,7 +48,7 @@ func NewWebService(conf *configs.WebConfig) (*WebService, error) {
 
 	return &WebService{
 		AuthenticateAndPostClient: aapClient,
-		// NewsfeedClient:            nfClient,
+		NewsfeedClient:            nfClient,
 		RedisClient:               redisClient,
 		Logger:                    logger,
 	}, nil

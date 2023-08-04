@@ -2,6 +2,7 @@ package authen_and_post_svc
 
 import (
 	"context"
+	// "encoding/json"
 	"errors"
 	"time"
 
@@ -11,9 +12,10 @@ import (
 
 	"github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
+	pb_nfp "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed_publishing"
+	// "github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
-	// "github.com/segmentio/kafka-go"
 )
 
 func (a *AuthenticateAndPostService) CreatePost(ctx context.Context, info *pb_aap.CreatePostRequest) (*pb_aap.CreatePostResponse, error) {
@@ -36,25 +38,11 @@ func (a *AuthenticateAndPostService) CreatePost(ctx context.Context, info *pb_aa
 		return nil, result.Error
 	}
 
-	// // Send post to message queue to announce to followers
-	// post, err := a.GetPost(ctx, &pb_aap.PostInfo{Id: int64(newPost.ID)})
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// jsonPost, err := json.Marshal(post)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// err = a.kafkaWriter.WriteMessages(ctx, kafka.Message{
-	// 	Key:   []byte("post"),
-	// 	Value: jsonPost,
-	// 	Headers: []kafka.Header{
-	// 		{Key: "Content-Type", Value: []byte("application/json")},
-	// 	},
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// Send user_id and post_id to NewsfeedPublishingClient to announce to followers
+	a.nfPubClient.PublishPost(ctx, &pb_nfp.PublishPostRequest{
+		UserId: newPost.UserID,
+		PostId: int64(newPost.ID),
+	})
 
 	return &pb_aap.CreatePostResponse{
 		Status: pb_aap.CreatePostResponse_OK,
