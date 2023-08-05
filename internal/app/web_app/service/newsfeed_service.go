@@ -1,33 +1,43 @@
 package service
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/maxuanquang/social-network/internal/pkg/types"
-	"net/http"
 
 	pb_nf "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed"
 )
 
 func (svc *WebService) GetNewsfeed(ctx *gin.Context) {
 	// Check authorization
-	_, userId, _, err := svc.checkSessionAuthentication(ctx)
+	_, userId, err := svc.checkSessionAuthentication(ctx)
 	if err != nil {
 		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
 	// Call GetNewsfeed service
-	newsfeed, err := svc.NewsfeedClient.GetNewsfeed(ctx, &pb_nf.NewsfeedRequest{UserId: int64(userId)})
+	resp, err := svc.NewsfeedClient.GetNewsfeed(ctx, &pb_nf.GetNewsfeedRequest{UserId: int64(userId)})
 	if err != nil {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
-
-	// Return
-	var posts []gin.H
-	for _, postDetailInfo := range newsfeed.Posts {
-		posts = append(posts, svc.newMapPost(postDetailInfo))
+	if resp.GetStatus() == pb_nf.GetNewsfeedResponse_NEWSFEED_EMPTY {
+		ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "newsfeed empty"})
+		return
+	} else if resp.GetStatus() == pb_nf.GetNewsfeedResponse_OK {
+		ctx.IndentedJSON(http.StatusOK, resp.GetPostsIds())
+		return
+	} else {
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
+		return
 	}
 
-	ctx.IndentedJSON(http.StatusOK, gin.H{"newsfeed": posts})
+	// // Return
+	// var posts []gin.H
+	// for _, postDetailInfo := range resp.Posts {
+	// 	posts = append(posts, svc.newMapPost(postDetailInfo))
+	// }
+
 }

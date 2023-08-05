@@ -28,6 +28,7 @@ type Config struct {
 	Redis               RedisConfig               `yaml:"redis"`
 	AuthenticateAndPost AuthenticateAndPostConfig `yaml:"authenticate_and_post_config"`
 	Newsfeed            NewsfeedConfig            `yaml:"newsfeed_config"`
+	NewsfeedPublishing  NewsfeedPublishingConfig  `yaml:"newsfeed_publishing_config"`
 	Web                 WebConfig                 `yaml:"web_config"`
 }
 
@@ -50,10 +51,10 @@ type KafkaConfig struct {
 }
 
 type AuthenticateAndPostConfig struct {
-	Port  int         `yaml:"port"`
-	MySQL MySQLConfig `yaml:"mysql"`
-	Redis RedisConfig `yaml:"redis"`
-	Kafka KafkaConfig `yaml:"kafka"`
+	Port               int         `yaml:"port"`
+	MySQL              MySQLConfig `yaml:"mysql"`
+	Redis              RedisConfig `yaml:"redis"`
+	NewsfeedPublishing HostConfig  `yaml:"newsfeed_publishing"`
 }
 
 type NewsfeedConfig struct {
@@ -70,6 +71,13 @@ type WebConfig struct {
 	AuthenticateAndPost HostConfig  `yaml:"authenticate_and_post"`
 	Newsfeed            HostConfig  `yaml:"newsfeed"`
 	Redis               RedisConfig `yaml:"redis"`
+}
+
+type NewsfeedPublishingConfig struct {
+	Port                int         `yaml:"port"`
+	Redis               RedisConfig `yaml:"redis"`
+	Kafka               KafkaConfig `yaml:"kafka"`
+	AuthenticateAndPost HostConfig  `yaml:"authenticate_and_post"`
 }
 
 type HostConfig struct {

@@ -17,12 +17,19 @@ authenticate_and_post_config: &AAP
   port: 19001
   mysql: *MYSQL
   redis: *REDIS
-  kafka: *KAFKA
+  newsfeed_publishing:
+    hosts: ["192.168.0.103:19004"]
 
 # Configuration for nf service connection
 newsfeed_config: &NF
   port: 19002
   mysql: *MYSQL
+  redis: *REDIS
+  kafka: *KAFKA
+
+# Configuration for newsfeed publishing service
+newsfeed_publishing_config: &NFP
+  port: 19004
   redis: *REDIS
   kafka: *KAFKA
   authenticate_and_post:

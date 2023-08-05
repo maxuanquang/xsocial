@@ -12,12 +12,16 @@ down_migration:
 	migrate -path scripts/migration/ -database "mysql://$(USERNAME):$(PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/engineerpro?charset=utf8mb4&parseTime=True&loc=Local" -verbose down
 proto_aap:
 	protoc --proto_path=pkg/types/proto/ --go_out=pkg/types/proto/pb/authen_and_post --go_opt=paths=source_relative \
-	--go-grpc_out=pkg/types/proto/pb/authen_and_post --go-grpc_opt=paths=source_relative \
+	--go-grpc_out=pkg/types/proto/pb/authen_and_post --go-grpc_opt=paths=source_relative --experimental_allow_proto3_optional \
 	authen_and_post.proto
 proto_newsfeed:
 	protoc --proto_path=pkg/types/proto/ --go_out=pkg/types/proto/pb/newsfeed --go_opt=paths=source_relative \
-	--go-grpc_out=pkg/types/proto/pb/newsfeed --go-grpc_opt=paths=source_relative \
+	--go-grpc_out=pkg/types/proto/pb/newsfeed --go-grpc_opt=paths=source_relative --experimental_allow_proto3_optional \
 	newsfeed.proto
+proto_newsfeed_publishing:
+	protoc --proto_path=pkg/types/proto/ --go_out=pkg/types/proto/pb/newsfeed_publishing --go_opt=paths=source_relative \
+	--go-grpc_out=pkg/types/proto/pb/newsfeed_publishing --go-grpc_opt=paths=source_relative --experimental_allow_proto3_optional \
+	newsfeed_publishing.proto
 
 .PHONY: vendor
 vendor:

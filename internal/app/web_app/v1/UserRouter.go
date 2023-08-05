@@ -11,4 +11,5 @@ func AddUserRouter(r *gin.RouterGroup, svc *service.WebService) {
 	userRouter.POST("signup", svc.CreateUser)
 	userRouter.POST("login", svc.CheckUserAuthentication)
 	userRouter.POST("edit", svc.EditUser)
+	userRouter.GET(":user_id", svc.GetUserDetailInfo)
 }

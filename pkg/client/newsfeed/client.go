@@ -31,6 +31,6 @@ type randomClient struct {
 	clients []pb_nf.NewsfeedClient
 }
 
-func (a *randomClient) GetNewsfeed(ctx context.Context, in *pb_nf.NewsfeedRequest, opts ...grpc.CallOption) (*pb_nf.NewsfeedResponse, error) {
+func (a *randomClient) GetNewsfeed(ctx context.Context, in *pb_nf.GetNewsfeedRequest, opts ...grpc.CallOption) (*pb_nf.GetNewsfeedResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].GetNewsfeed(ctx, in, opts...)
 }

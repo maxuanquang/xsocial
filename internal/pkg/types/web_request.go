@@ -14,45 +14,46 @@ const (
 )
 
 type LoginRequest struct {
-	UserName string `json:"username" validate:"required,username"`
+	UserName string `json:"user_name" validate:"required,user_name"`
 	Password string `json:"password" validate:"required,password"`
 }
 
 type CreateUserRequest struct {
-	UserName  string `json:"username" validate:"required,username"`
-	Password  string `json:"password" validate:"required,password"`
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	DoB       string `json:"dateofbirth" validate:"required,dob"`
-	Email     string `json:"email" validate:"required,email"`
+	UserName    string `json:"user_name" validate:"required,user_name"`
+	Password    string `json:"password" validate:"required,password"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	DateOfBirth string `json:"date_of_birth" validate:"required,date_of_birth"`
+	Email       string `json:"email" validate:"required,email"`
 }
 
 type EditUserRequest struct {
-	Password  string `json:"password" validate:"omitempty,password"`
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	DoB       string `json:"dateofbirth" validate:"omitempty,dob"`
-	Email     string `json:"email" validate:"omitempty,email"`
+	Password    string `json:"password" validate:"omitempty,password"`
+	FirstName   string `json:"first_name" validate:"omitempty"`
+	LastName    string `json:"last_name" validate:"omitempty"`
+	DateOfBirth string `json:"date_of_birth" validate:"omitempty,date_of_birth"`
 }
 
 type CreatePostRequest struct {
 	ContentText      string   `json:"content_text" validate:"required"`
 	ContentImagePath []string `json:"content_image_path" validate:"omitempty,dive,url"`
+	Visible          *bool    `json:"visible"`
 }
 
 type EditPostRequest struct {
-	ContentText      string   `json:"content_text" validate:"omitempty"`
-	ContentImagePath []string `json:"content_image_path" validate:"omitempty,dive,url"`
+	ContentText      *string   `json:"content_text" validate:"omitempty"`
+	ContentImagePath *[]string `json:"content_image_path" validate:"omitempty,dive,url"`
+	Visible          *bool     `json:"visible"`
 }
 
-type CommentPostRequest struct {
-	Content string `json:"content"`
+type CreatePostCommentRequest struct {
+	ContentText string `json:"content_text" validate:"required"`
 }
 
 func NewValidator() *validator.Validate {
 	validate := validator.New()
-	validate.RegisterValidation("dob", validateDOB)
-	validate.RegisterValidation("username", validateUsername)
+	validate.RegisterValidation("date_of_birth", validateDOB)
+	validate.RegisterValidation("user_name", validateUsername)
 	validate.RegisterValidation("password", validatePassword)
 
 	return validate

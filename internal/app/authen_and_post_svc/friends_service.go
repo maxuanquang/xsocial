@@ -2,108 +2,136 @@ package authen_and_post_svc
 
 import (
 	"context"
-	"errors"
 
 	"github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 )
 
-func (a *AuthenticateAndPostService) GetUserFollower(ctx context.Context, userInfo *pb_aap.UserInfo) (*pb_aap.UserFollowerInfo, error) {
-	// Check if the username which is changing information exists in the database
-	existed, userModel := a.checkUserId(userInfo.GetId())
-	if !existed {
-		return nil, errors.New("user does not exist")
+func (a *AuthenticateAndPostService) GetUserFollower(ctx context.Context, info *pb_aap.GetUserFollowerRequest) (*pb_aap.GetUserFollowerResponse, error) {
+	exist, _ := a.findUserById(info.GetUserId())
+	if !exist {
+		return &pb_aap.GetUserFollowerResponse{
+			Status: pb_aap.GetUserFollowerResponse_USER_NOT_FOUND,
+		}, nil
 	}
 
-	// If the user exists, return the followers
-	var followers []types.User
-	err := a.db.Raw("select u.* from following f join user u on f.follower_id = u.id where f.user_id = ?", userModel.ID).Scan(&followers).Error
-	if err != nil {
-		return nil, err
+	var user types.User
+	result := a.db.Preload("Followers").First(&user, info.GetUserId())
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
-	returnUserFolower := pb_aap.UserFollowerInfo{}
-	for _, follower := range followers {
-		followerInfo := pb_aap.UserInfo{Id: follower.ID, UserName: follower.UserName}
-		returnUserFolower.Followers = append(returnUserFolower.Followers, &followerInfo)
+	var followersIds []int64
+	for _, follower := range user.Followers {
+		followersIds = append(followersIds, int64(follower.ID))
 	}
-
-	return &returnUserFolower, nil
+	return &pb_aap.GetUserFollowerResponse{
+		Status:       pb_aap.GetUserFollowerResponse_OK,
+		FollowersIds: followersIds,
+	}, nil
 }
 
-func (a *AuthenticateAndPostService) FollowUser(ctx context.Context, info *pb_aap.UserAndFollowerInfo) (*pb_aap.ActionResult, error) {
-	// Check if the user exists
-	existed, _ := a.checkUserId(info.GetUser().GetId())
-	if !existed {
-		return nil, errors.New("user does not exist")
+func (a *AuthenticateAndPostService) GetUserFollowing(ctx context.Context, info *pb_aap.GetUserFollowingRequest) (*pb_aap.GetUserFollowingResponse, error) {
+	exist, _ := a.findUserById(info.GetUserId())
+	if !exist {
+		return &pb_aap.GetUserFollowingResponse{
+			Status: pb_aap.GetUserFollowingResponse_USER_NOT_FOUND,
+		}, nil
 	}
 
-	// Check if the follower exists
-	existed, _ = a.checkUserId(info.GetFollower().GetId())
-	if !existed {
-		return nil, errors.New("follower does not exist")
+	var user types.User
+	result := a.db.Preload("Followings").First(&user, info.GetUserId())
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
-	// Execute the follow command
-	err := a.db.Exec("insert into following (user_id, follower_id) values (?, ?)",
-		info.GetUser().GetId(),
-		info.GetFollower().GetId(),
-	).Error
-	if err != nil {
-		return nil, err
+	var followingsIds []int64
+	for _, following := range user.Followings {
+		followingsIds = append(followingsIds, int64(following.ID))
 	}
-
-	return &pb_aap.ActionResult{Status: pb_aap.ActionStatus_SUCCEEDED}, nil
+	return &pb_aap.GetUserFollowingResponse{
+		Status:        pb_aap.GetUserFollowingResponse_OK,
+		FollowingsIds: followingsIds,
+	}, nil
 }
 
-func (a *AuthenticateAndPostService) UnfollowUser(ctx context.Context, info *pb_aap.UserAndFollowerInfo) (*pb_aap.ActionResult, error) {
+func (a *AuthenticateAndPostService) FollowUser(ctx context.Context, info *pb_aap.FollowUserRequest) (*pb_aap.FollowUserResponse, error) {
 	// Check if the user exists
-	existed, _ := a.checkUserId(info.GetUser().GetId())
-	if !existed {
-		return nil, errors.New("user does not exist")
+	exist, _ := a.findUserById(info.GetUserId())
+	if !exist {
+		return &pb_aap.FollowUserResponse{Status: pb_aap.FollowUserResponse_USER_NOT_FOUND}, nil
+	}
+	exist, friend := a.findUserById(info.GetFollowingId())
+	if !exist {
+		return &pb_aap.FollowUserResponse{Status: pb_aap.FollowUserResponse_USER_NOT_FOUND}, nil
 	}
 
-	// Check if the follower exists
-	existed, _ = a.checkUserId(info.GetFollower().GetId())
-	if !existed {
-		return nil, errors.New("follower does not exist")
-	}
-
-	// Execute the unfollow command
-	err := a.db.Exec("delete from following where user_id = ? and follower_id = ?",
-		info.GetUser().GetId(),
-		info.GetFollower().GetId(),
-	).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb_aap.ActionResult{Status: pb_aap.ActionStatus_SUCCEEDED}, nil
-}
-
-func (a *AuthenticateAndPostService) GetUserPost(ctx context.Context, userInfo *pb_aap.UserInfo) (*pb_aap.UserPostDetailInfo, error) {
-	// Check if the user exists
-	existed, _ := a.checkUserId(userInfo.GetId())
-	if !existed {
-		return nil, errors.New("user does not exist")
-	}
-
-	// Execute command
-	var postModels []types.Post
-	err := a.db.Raw("select * from post where user_id = ?", userInfo.GetId()).Scan(&postModels).Error
-	if err != nil {
-		return nil, err
-	}
-
-	// Return
-	var posts []*pb_aap.PostDetailInfo
-	for _, model := range postModels {
-		postId := int64(model.ID)
-		post, err := a.GetPost(ctx, &pb_aap.PostInfo{Id: postId})
-		if err == nil {
-			posts = append(posts, post)
+	var user types.User
+	a.db.Preload("Followings").First(&user, info.GetUserId())
+	for _, following := range user.Followings {
+		if following.ID == uint(info.GetFollowingId()) {
+			return &pb_aap.FollowUserResponse{Status: pb_aap.FollowUserResponse_ALREADY_FOLLOWED}, nil
 		}
 	}
 
-	return &pb_aap.UserPostDetailInfo{Posts: posts}, nil
+	err := a.db.Model(&user).Association("Followings").Append(&friend)
+	if err != nil {
+		return nil, err
+	}
+	return &pb_aap.FollowUserResponse{
+		Status: pb_aap.FollowUserResponse_OK,
+	}, nil
+}
+
+func (a *AuthenticateAndPostService) UnfollowUser(ctx context.Context, info *pb_aap.UnfollowUserRequest) (*pb_aap.UnfollowUserResponse, error) {
+	exist, _ := a.findUserById(info.GetUserId())
+	if !exist {
+		return &pb_aap.UnfollowUserResponse{Status: pb_aap.UnfollowUserResponse_USER_NOT_FOUND}, nil
+	}
+	exist, friend := a.findUserById(info.GetFollowingId())
+	if !exist {
+		return &pb_aap.UnfollowUserResponse{Status: pb_aap.UnfollowUserResponse_USER_NOT_FOUND}, nil
+	}
+
+	var user types.User
+	a.db.Preload("Followings").First(&user, info.GetUserId())
+	currentlyFollowing := false
+	for _, following := range user.Followings {
+		if following.ID == uint(info.GetFollowingId()) {
+			currentlyFollowing = true
+			break
+		}
+	}
+	if !currentlyFollowing {
+		return &pb_aap.UnfollowUserResponse{Status: pb_aap.UnfollowUserResponse_NOT_FOLLOWED}, nil
+	}
+
+	err := a.db.Model(&user).Association("Followings").Delete(&friend)
+	if err != nil {
+		return nil, err
+	}
+	return &pb_aap.UnfollowUserResponse{
+		Status: pb_aap.UnfollowUserResponse_OK,
+	}, nil
+}
+
+func (a *AuthenticateAndPostService) GetUserPosts(ctx context.Context, info *pb_aap.GetUserPostsRequest) (*pb_aap.GetUserPostsResponse, error) {
+	exist, _ := a.findUserById(info.GetUserId())
+	if !exist {
+		return &pb_aap.GetUserPostsResponse{Status: pb_aap.GetUserPostsResponse_USER_NOT_FOUND}, nil
+	}
+
+	var user types.User
+	a.db.Preload("Posts").First(&user, info.GetUserId())
+
+	// Return
+	var posts_ids []int64
+	for _, post := range user.Posts {
+		posts_ids = append(posts_ids, int64(post.ID))
+	}
+
+	return &pb_aap.GetUserPostsResponse{
+		Status:   pb_aap.GetUserPostsResponse_OK,
+		PostsIds: posts_ids,
+	}, nil
 }

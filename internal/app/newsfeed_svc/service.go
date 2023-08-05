@@ -5,14 +5,12 @@ import (
 	// "encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
+	// "reflect"
 	"strconv"
-	"strings"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/maxuanquang/social-network/configs"
-	"github.com/maxuanquang/social-network/internal/pkg/types"
-	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
+	// "github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_nf "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed"
 )
 
@@ -33,177 +31,100 @@ func NewNewsfeedService(cfg *configs.NewsfeedConfig) (*NewsfeedService, error) {
 	}, nil
 }
 
-func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.NewsfeedRequest) (*pb_nf.NewsfeedResponse, error) {
+func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.GetNewsfeedRequest) (*pb_nf.GetNewsfeedResponse, error) {
 	// Query newsfeed from redis
-	newsfeedKey := "newsfeed:" + fmt.Sprint(request.UserId)
+	newsfeedKey := "newsfeed:" + fmt.Sprint(request.GetUserId())
 	postsIds, err := svc.redisClient.LPopCount(svc.redisClient.Context(), newsfeedKey, 5).Result()
-	if err != nil {
+	if errors.Is(err, redis.Nil) {
+		return &pb_nf.GetNewsfeedResponse{
+			Status: pb_nf.GetNewsfeedResponse_NEWSFEED_EMPTY,
+		}, nil
+	} else if err != nil {
 		return nil, err
 	}
-	if len(postsIds) == 0 {
-		return nil, errors.New("no new posts in newsfeed")
-	}
 
-	var posts []*pb_aap.PostDetailInfo
+	var int64PostsIds []int64
 	for _, id := range postsIds {
-		// Get post from redis
-		postKey := "post:" + id
-		redisPost, err := svc.getPostFromRedis(ctx, postKey)
+		intPostId, err := strconv.Atoi(id)
 		if err != nil {
-			return nil, err
-		}
-
-		// Get post's comments from redis
-		var comments []*pb_aap.CommentInfo
-		if len(redisPost.CommentsIds) > 0 {
-			for _, comment_id := range strings.Split(redisPost.CommentsIds, " ") {
-				commentKey := "comment:" + comment_id
-				redisComment, err := svc.getCommentFromRedis(ctx, commentKey)
-				if err != nil {
-					return nil, err
-				}
-
-				comments = append(comments, &pb_aap.CommentInfo{
-					Id:      redisComment.ID,
-					PostId:  redisComment.PostID,
-					UserId:  redisComment.UserID,
-					Content: redisComment.Content,
-				})
-			}
-		}
-
-		// Get post's likes from redis
-		var likes []*pb_aap.LikeInfo
-		if len(redisPost.LikedUsersIds) > 0 {
-			for _, liked_user_id := range strings.Split(redisPost.LikedUsersIds, " ") {
-				user_id, err := strconv.Atoi(liked_user_id)
-				if err != nil {
-					return nil, err
-				}
-				likes = append(likes, &pb_aap.LikeInfo{
-					UserId: int64(user_id),
-					PostId: redisPost.ID,
-				})
-			}
-		}
-
-		posts = append(posts, &pb_aap.PostDetailInfo{
-			Id:               redisPost.ID,
-			UserId:           redisPost.UserID,
-			ContentText:      redisPost.ContentText,
-			ContentImagePath: strings.Split(redisPost.ContentImagePath, " "),
-			Visible:          redisPost.Visible,
-			CreatedAt:        redisPost.CreatedAt,
-			Comments:         comments,
-			Likes:            likes,
-		})
-
-	}
-	return &pb_nf.NewsfeedResponse{Posts: posts}, nil
-}
-
-func (svc *NewsfeedService) getPostFromRedis(ctx context.Context, key string) (*types.RedisPost, error) {
-	mapRedisPost, err := svc.redisClient.HGetAll(ctx, key).Result()
-	if err != nil {
-		return nil, err
-	}
-
-	var redisPost types.RedisPost
-	err = svc.unmarshal(mapRedisPost, &redisPost)
-	if err != nil {
-		return nil, err
-	}
-
-	return &redisPost, nil
-}
-
-func (svc *NewsfeedService) getCommentFromRedis(ctx context.Context, key string) (*types.RedisComment, error) {
-	mapRedisComment, err := svc.redisClient.HGetAll(ctx, key).Result()
-	if err != nil {
-		return nil, err
-	}
-
-	var redisComment types.RedisComment
-	err = svc.unmarshal(mapRedisComment, &redisComment)
-	if err != nil {
-		return nil, err
-	}
-	return &redisComment, nil
-}
-
-// unmarshal converts map[string]string to a struct.
-// It takes name of each field in map[string]string and maps with json tags in target struct
-func (svc *NewsfeedService) unmarshal(sourceMap map[string]string, objectPointer interface{}) error {
-	objValue := reflect.ValueOf(objectPointer)
-	if objValue.Kind() != reflect.Ptr || objValue.IsNil() {
-		return fmt.Errorf("obj must be a non-nil pointer to a struct")
-	}
-
-	// Iterate over struct fields
-	for i := 0; i < objValue.Elem().NumField(); i++ {
-		field := objValue.Elem().Field(i)
-
-		jsonTag := objValue.Elem().Type().Field(i).Tag.Get("json")
-		mapValue, ok := sourceMap[jsonTag]
-		if !ok || len(mapValue) == 0 {
 			continue
 		}
-
-		switch field.Kind() {
-		case reflect.Int64:
-			intValue, err := strconv.ParseInt(mapValue, 10, 64)
-			if err != nil {
-				return err
-			}
-			field.SetInt(intValue)
-		case reflect.String:
-			field.SetString(mapValue)
-		case reflect.Bool:
-			boolValue, err := strconv.ParseBool(mapValue)
-			if err != nil {
-				return err
-			}
-			field.SetBool(boolValue)
-		}
+		int64PostsIds = append(int64PostsIds, int64(intPostId))
 	}
-	return nil
+	if len(int64PostsIds) == 0 {
+		return &pb_nf.GetNewsfeedResponse{
+			Status: pb_nf.GetNewsfeedResponse_NEWSFEED_EMPTY,
+		}, nil
+	}
+	return &pb_nf.GetNewsfeedResponse{
+		Status:   pb_nf.GetNewsfeedResponse_OK,
+		PostsIds: int64PostsIds,
+	}, nil
 }
 
-// func (svc *NewsfeedService) convertMapToPost(mapRedisPost map[string]string) (*types.RedisPost, error) {
-// 	redisPost := &types.RedisPost{}
-// 	redisPostType := reflect.TypeOf(redisPost).Elem()
-// 	redisPostValue := reflect.ValueOf(redisPost).Elem()
+// func (svc *NewsfeedService) getPostFromRedis(ctx context.Context, key string) (*types.RedisPost, error) {
+// 	mapRedisPost, err := svc.redisClient.HGetAll(ctx, key).Result()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var redisPost types.RedisPost
+// 	err = svc.unmarshal(mapRedisPost, &redisPost)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &redisPost, nil
+// }
+
+// func (svc *NewsfeedService) getCommentFromRedis(ctx context.Context, key string) (*types.RedisComment, error) {
+// 	mapRedisComment, err := svc.redisClient.HGetAll(ctx, key).Result()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var redisComment types.RedisComment
+// 	err = svc.unmarshal(mapRedisComment, &redisComment)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &redisComment, nil
+// }
+
+// // unmarshal converts map[string]string to a struct.
+// // It takes name of each field in map[string]string and maps with json tags in target struct
+// func (svc *NewsfeedService) unmarshal(sourceMap map[string]string, objectPointer interface{}) error {
+// 	objValue := reflect.ValueOf(objectPointer)
+// 	if objValue.Kind() != reflect.Ptr || objValue.IsNil() {
+// 		return fmt.Errorf("obj must be a non-nil pointer to a struct")
+// 	}
 
 // 	// Iterate over struct fields
-// 	for i := 0; i < redisPostType.NumField(); i++ {
-// 		jsonTag := redisPostType.Field(i).Tag.Get("json")
+// 	for i := 0; i < objValue.Elem().NumField(); i++ {
+// 		field := objValue.Elem().Field(i)
 
-// 		value, ok := mapRedisPost[jsonTag]
-// 		if !ok {
+// 		jsonTag := objValue.Elem().Type().Field(i).Tag.Get("json")
+// 		mapValue, ok := sourceMap[jsonTag]
+// 		if !ok || len(mapValue) == 0 {
 // 			continue
 // 		}
 
-// 		if redisPostType.Field(i).Type.Kind() == reflect.Int64 {
-// 			valueTemp, err := strconv.Atoi(value)
+// 		switch field.Kind() {
+// 		case reflect.Int64:
+// 			intValue, err := strconv.ParseInt(mapValue, 10, 64)
 // 			if err != nil {
-// 				return nil, err
+// 				return err
 // 			}
-// 			valueConverted := reflect.ValueOf(valueTemp).Convert(redisPostType.Field(i).Type)
-// 			redisPostValue.Field(i).Set(valueConverted)
-// 		} else if redisPostType.Field(i).Type.Kind() == reflect.String {
-// 			valueTemp := value
-// 			valueConverted := reflect.ValueOf(valueTemp).Convert(redisPostType.Field(i).Type)
-// 			redisPostValue.Field(i).Set(valueConverted)
-// 		} else if redisPostType.Field(i).Type.Kind() == reflect.Bool {
-// 			var valueTemp bool
-// 			if value == "1" || value == "true" {
-// 				valueTemp = true
-// 			} else {
-// 				valueTemp = false
+// 			field.SetInt(intValue)
+// 		case reflect.String:
+// 			field.SetString(mapValue)
+// 		case reflect.Bool:
+// 			boolValue, err := strconv.ParseBool(mapValue)
+// 			if err != nil {
+// 				return err
 // 			}
-// 			valueConverted := reflect.ValueOf(valueTemp).Convert(redisPostType.Field(i).Type)
-// 			redisPostValue.Field(i).Set(valueConverted)
+// 			field.SetBool(boolValue)
 // 		}
 // 	}
-// 	return redisPost, nil
+// 	return nil
 // }
