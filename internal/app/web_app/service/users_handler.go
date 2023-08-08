@@ -13,17 +13,17 @@ import (
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 )
 
-// CheckUserNamePassword godoc
+// CheckUserNamePassword checks user's authentication
 //
-//	@Summary		get user
-//	@Description	Check user's username and password
+//	@Summary		Check user's username and password
+//	@Description	check user's username and password
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
-//	@Param			request body types.LoginRequest true "login param"
-//	@Success		200	{object} types.MessageResponse
-//	@Failure		400	{object} types.MessageResponse
-//	@Failure		500	{object} types.MessageResponse
+//	@Param			request	body		types.LoginRequest	true	"Login parameters"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
 //	@Router			/users/login [post]
 func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 	// Validate request
@@ -76,6 +76,18 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 	}
 }
 
+// CreateUser creates new user account
+//
+//	@Summary		create new user account
+//	@Description	create new user account
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		types.CreateUserRequest	true	"Create user parameters"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/users/signup [post]
 func (svc *WebService) CreateUser(ctx *gin.Context) {
 	// Validate request
 	var jsonRequest types.CreateUserRequest
@@ -123,6 +135,18 @@ func (svc *WebService) CreateUser(ctx *gin.Context) {
 	}
 }
 
+// EditUser edits user information
+//
+//	@Summary		edit user information
+//	@Description	edit user information
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		types.EditUserRequest	true	"Edit user information parameters"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/users/edit [put]
 func (svc *WebService) EditUser(ctx *gin.Context) {
 	// Check authorization
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -189,6 +213,18 @@ func (svc *WebService) EditUser(ctx *gin.Context) {
 	}
 }
 
+// GetUserDetailInfo gets user information
+//
+//	@Summary		get user information
+//	@Description	get user information
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		int	true	"User ID"
+//	@Success		200		{object}	types.UserDetailInfoResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/users/{user_id} [get]
 func (svc *WebService) GetUserDetailInfo(ctx *gin.Context) {
 	// Check URL params
 	userId, err := strconv.Atoi(ctx.Param("user_id"))
@@ -209,13 +245,13 @@ func (svc *WebService) GetUserDetailInfo(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user not found"})
 		return
 	} else if resp.GetStatus() == pb_aap.GetUserDetailInfoResponse_OK {
-		ctx.IndentedJSON(http.StatusAccepted, gin.H{
-			"user_id":       resp.GetUser().GetUserId(),
-			"user_name":     resp.GetUser().GetUserName(),
-			"first_name":    resp.GetUser().GetFirstName(),
-			"last_name":     resp.GetUser().GetLastName(),
-			"date_of_birth": resp.GetUser().GetDateOfBirth().AsTime().Format(time.DateOnly),
-			"email":         resp.GetUser().GetEmail(),
+		ctx.IndentedJSON(http.StatusAccepted, types.UserDetailInfoResponse{
+			UserID:      resp.GetUser().GetUserId(),
+			UserName:    resp.GetUser().GetUserName(),
+			FirstName:   resp.GetUser().GetFirstName(),
+			LastName:    resp.GetUser().GetLastName(),
+			DateOfBirth: resp.GetUser().GetDateOfBirth().AsTime().Format(time.DateOnly),
+			Email:       resp.GetUser().GetEmail(),
 		})
 		return
 	} else {

@@ -12,6 +12,18 @@ import (
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 )
 
+// CreatePost creates new post
+//
+//	@Summary		create new post
+//	@Description	create new post
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		types.CreatePostRequest	true	"Create post parameters"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/posts/ [post]
 func (svc *WebService) CreatePost(ctx *gin.Context) {
 	// Check session
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -60,6 +72,18 @@ func (svc *WebService) CreatePost(ctx *gin.Context) {
 	}
 }
 
+// GetPostDetailInfo gets post detail information
+//
+//	@Summary		get post detail information
+//	@Description	get post detail information
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			post_id	path		int	true	"Post ID"
+//	@Success		200		{object}	types.PostDetailInfoResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/posts/{post_id} [get]
 func (svc *WebService) GetPostDetailInfo(ctx *gin.Context) {
 	// Check URL params
 	stringPostId := ctx.Param("post_id")
@@ -81,7 +105,7 @@ func (svc *WebService) GetPostDetailInfo(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "post not found"})
 		return
 	} else if resp.GetStatus() == pb_aap.GetPostDetailInfoResponse_OK {
-		ctx.IndentedJSON(http.StatusAccepted, svc.newMapPost(resp.Post))
+		ctx.IndentedJSON(http.StatusAccepted, svc.newPostDetailInfoResponse(resp.Post))
 		return
 	} else {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
@@ -89,6 +113,18 @@ func (svc *WebService) GetPostDetailInfo(ctx *gin.Context) {
 	}
 }
 
+// EditPost edits post information
+//
+//	@Summary		edit post information
+//	@Description	edit post information
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			post_id	path		int	true	"Post ID"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/posts/ [put]
 func (svc *WebService) EditPost(ctx *gin.Context) {
 	// Check session
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -162,6 +198,18 @@ func (svc *WebService) EditPost(ctx *gin.Context) {
 	}
 }
 
+// DeletePost deletes post
+//
+//	@Summary		delete post
+//	@Description	delete post
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			post_id	path		int	true	"Post ID"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/posts/ [delete]
 func (svc *WebService) DeletePost(ctx *gin.Context) {
 	// Check session
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -205,6 +253,19 @@ func (svc *WebService) DeletePost(ctx *gin.Context) {
 	}
 }
 
+// CommentPost comments to a post
+//
+//	@Summary		comment to post
+//	@Description	comment to post
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			post_id	path		int								true	"Post ID"
+//	@Param			request	body		types.CreatePostCommentRequest	true	"Comment's content"
+//	@Success		200		{object}	types.PostDetailInfoResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/posts/{post_id} [post]
 func (svc *WebService) CommentPost(ctx *gin.Context) {
 	// Check session
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -260,6 +321,18 @@ func (svc *WebService) CommentPost(ctx *gin.Context) {
 	}
 }
 
+// LikePost likes a post
+//
+//	@Summary		like post
+//	@Description	like post
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			post_id	path		int	true	"Post ID"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/posts/{post_id}/likes [post]
 func (svc *WebService) LikePost(ctx *gin.Context) {
 	// Check session
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -302,32 +375,29 @@ func (svc *WebService) LikePost(ctx *gin.Context) {
 	}
 }
 
-func (svc *WebService) newMapPost(post *pb_aap.PostDetailInfo) gin.H {
-	var comments []map[string]interface{}
+func (svc *WebService) newPostDetailInfoResponse(post *pb_aap.PostDetailInfo) types.PostDetailInfoResponse {
+	var comments []types.CommentResponse
 	for _, comment := range post.GetComments() {
-		comments = append(comments, map[string]interface{}{
-			"comment_id":   comment.GetCommentId(),
-			"user_id":      comment.GetUserId(),
-			"post_id":      comment.GetPostId(),
-			"content_text": comment.GetContentText(),
+		comments = append(comments, types.CommentResponse{
+			CommentId:   comment.GetCommentId(),
+			UserId:      comment.GetUserId(),
+			PostId:      comment.GetPostId(),
+			ContentText: comment.GetContentText(),
 		})
 	}
 
-	var likes []map[string]interface{}
+	var users_liked []int64
 	for _, like := range post.GetLikedUsers() {
-		likes = append(likes, map[string]interface{}{
-			"user_id": like.GetUserId(),
-			"post_id": like.GetPostId(),
-		})
+		users_liked = append(users_liked, like.GetUserId())
 	}
 
-	return gin.H{
-		"post_id":            post.GetPostId(),
-		"created_at":         post.GetCreatedAt().AsTime().In(time.Local).Format(time.DateTime),
-		"user_id":            post.GetUserId(),
-		"content_text":       post.GetContentText(),
-		"content_image_path": post.GetContentImagePath(),
-		"comments":           comments,
-		"likes":              likes,
+	return types.PostDetailInfoResponse{
+		PostID:           post.GetPostId(),
+		UserID:           post.GetUserId(),
+		ContentText:      post.GetContentText(),
+		ContentImagePath: post.GetContentImagePath(),
+		CreatedAt:        post.GetCreatedAt().AsTime().In(time.Local).Format(time.DateTime),
+		Comments:         comments,
+		UsersLiked:       users_liked,
 	}
 }

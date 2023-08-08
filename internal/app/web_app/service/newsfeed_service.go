@@ -9,6 +9,17 @@ import (
 	pb_nf "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed"
 )
 
+// GetNewsfeed gets user's newsfeed
+//
+//	@Summary		get user's newsfeed
+//	@Description	get user's newsfeed
+//	@Tags			newsfeed
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	types.NewsfeedResponse
+//	@Failure		400	{object}	types.MessageResponse
+//	@Failure		500	{object}	types.MessageResponse
+//	@Router			/newsfeed [get]
 func (svc *WebService) GetNewsfeed(ctx *gin.Context) {
 	// Check authorization
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -27,17 +38,10 @@ func (svc *WebService) GetNewsfeed(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "newsfeed empty"})
 		return
 	} else if resp.GetStatus() == pb_nf.GetNewsfeedResponse_OK {
-		ctx.IndentedJSON(http.StatusOK, resp.GetPostsIds())
+		ctx.IndentedJSON(http.StatusOK, types.NewsfeedResponse{PostsIds: resp.GetPostsIds()})
 		return
 	} else {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
 		return
 	}
-
-	// // Return
-	// var posts []gin.H
-	// for _, postDetailInfo := range resp.Posts {
-	// 	posts = append(posts, svc.newMapPost(postDetailInfo))
-	// }
-
 }

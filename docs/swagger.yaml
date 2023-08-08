@@ -1,32 +1,572 @@
+basePath: /api/v1
 definitions:
+  types.CommentResponse:
+    properties:
+      comment_id:
+        type: integer
+      content_text:
+        type: string
+      post_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  types.CreatePostCommentRequest:
+    properties:
+      content_text:
+        type: string
+    required:
+    - content_text
+    type: object
+  types.CreatePostRequest:
+    properties:
+      content_image_path:
+        items:
+          type: string
+        type: array
+      content_text:
+        type: string
+      visible:
+        type: boolean
+    required:
+    - content_text
+    type: object
+  types.CreateUserRequest:
+    properties:
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      user_name:
+        type: string
+    required:
+    - date_of_birth
+    - email
+    - password
+    - user_name
+    type: object
+  types.EditUserRequest:
+    properties:
+      date_of_birth:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+    type: object
   types.LoginRequest:
     properties:
       password:
         type: string
-      username:
+      user_name:
         type: string
     required:
     - password
-    - username
+    - user_name
     type: object
   types.MessageResponse:
     properties:
       message:
         type: string
     type: object
+  types.NewsfeedResponse:
+    properties:
+      posts_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  types.PostDetailInfoResponse:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/types.CommentResponse'
+        type: array
+      content_image_path:
+        items:
+          type: string
+        type: array
+      content_text:
+        type: string
+      created_at:
+        type: string
+      post_id:
+        type: integer
+      user_id:
+        type: integer
+      users_liked:
+        items:
+          type: integer
+        type: array
+    type: object
+  types.UserDetailInfoResponse:
+    properties:
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      user_id:
+        type: integer
+      user_name:
+        type: string
+    type: object
+  types.UserFollowerResponse:
+    properties:
+      followers_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  types.UserFollowingResponse:
+    properties:
+      followings_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  types.UserPostsResponse:
+    properties:
+      posts_ids:
+        items:
+          type: integer
+        type: array
+    type: object
 info:
-  contact: {}
+  contact:
+    email: maxuanquang@gmail.com
+    name: Quang Ma
+    url: https://www.linkedin.com/in/maxuanquang
   description: A simple social network management service API in Go using Gin framework
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://maxuanquang.dev/gin-social-network-tos
   title: Gin Social Network Service
   version: "1.0"
 paths:
+  /friends/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: unfollow user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: unfollow user
+      tags:
+      - friends
+    post:
+      consumes:
+      - application/json
+      description: follow user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: follow user
+      tags:
+      - friends
+  /friends/{user_id}/followers:
+    get:
+      consumes:
+      - application/json
+      description: get followers IDs of an user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.UserFollowerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: get followers IDs of an user
+      tags:
+      - friends
+  /friends/{user_id}/followings:
+    get:
+      consumes:
+      - application/json
+      description: get followings IDs of an user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.UserFollowingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: get followings IDs of an user
+      tags:
+      - friends
+  /friends/{user_id}/posts:
+    get:
+      consumes:
+      - application/json
+      description: get all posts user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.UserPostsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: get all posts of user
+      tags:
+      - friends
+  /newsfeed:
+    get:
+      consumes:
+      - application/json
+      description: get user's newsfeed
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.NewsfeedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: get user's newsfeed
+      tags:
+      - newsfeed
+  /posts/:
+    delete:
+      consumes:
+      - application/json
+      description: delete post
+      parameters:
+      - description: Post ID
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: delete post
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      description: create new post
+      parameters:
+      - description: Create post parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: create new post
+      tags:
+      - posts
+    put:
+      consumes:
+      - application/json
+      description: edit post information
+      parameters:
+      - description: Post ID
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: edit post information
+      tags:
+      - posts
+  /posts/{post_id}:
+    get:
+      consumes:
+      - application/json
+      description: get post detail information
+      parameters:
+      - description: Post ID
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.PostDetailInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: get post detail information
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      description: comment to post
+      parameters:
+      - description: Post ID
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      - description: Comment's content
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreatePostCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.PostDetailInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: comment to post
+      tags:
+      - posts
+  /posts/{post_id}/likes:
+    post:
+      consumes:
+      - application/json
+      description: like post
+      parameters:
+      - description: Post ID
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: like post
+      tags:
+      - posts
+  /users/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: get user information
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.UserDetailInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: get user information
+      tags:
+      - users
+  /users/edit:
+    put:
+      consumes:
+      - application/json
+      description: edit user information
+      parameters:
+      - description: Edit user information parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.EditUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: edit user information
+      tags:
+      - users
   /users/login:
     post:
       consumes:
       - application/json
-      description: check username and password
+      description: check user's username and password
       parameters:
-      - description: login param
+      - description: Login parameters
         in: body
         name: request
         required: true
@@ -47,4 +587,46 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/types.MessageResponse'
+      summary: Check user's username and password
+      tags:
+      - users
+  /users/signup:
+    post:
+      consumes:
+      - application/json
+      description: create new user account
+      parameters:
+      - description: Create user parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: create new user account
+      tags:
+      - users
+securityDefinitions:
+  OAuth2Password:
+    flow: password
+    scopes:
+      admin: "\t\t\t\t\t\t\tGrants read and write access to administrative information"
+      read: "\t\t\t\t\t\t\t\tGrants read access"
+      write: "\t\t\t\t\t\t\tGrants write access"
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
 swagger: "2.0"

@@ -9,6 +9,18 @@ import (
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 )
 
+// GetUserFollower gets followers IDs of an user
+//
+//	@Summary		get followers IDs of an user
+//	@Description	get followers IDs of an user
+//	@Tags			friends
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		int	true	"User ID"
+//	@Success		200		{object}	types.UserFollowerResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/friends/{user_id}/followers [get]
 func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 	// Validate parameter
 	userId, err := strconv.Atoi(ctx.Param("user_id"))
@@ -25,11 +37,30 @@ func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
-
-	// Return
-	ctx.IndentedJSON(http.StatusAccepted, resp.GetFollowersIds())
+	if resp.GetStatus() == pb_aap.GetUserFollowerResponse_OK {
+		ctx.IndentedJSON(http.StatusOK, types.UserFollowerResponse{FollowersIds: resp.GetFollowersIds()})
+		return
+	} else if resp.GetStatus() == pb_aap.GetUserFollowerResponse_USER_NOT_FOUND {
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user not found"})
+		return
+	} else {
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
+		return
+	}
 }
 
+// GetUserFollowing gets followings IDs of an user
+//
+//	@Summary		get followings IDs of an user
+//	@Description	get followings IDs of an user
+//	@Tags			friends
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		int	true	"User ID"
+//	@Success		200		{object}	types.UserFollowingResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/friends/{user_id}/followings [get]
 func (svc *WebService) GetUserFollowing(ctx *gin.Context) {
 	// Validate parameter
 	userId, err := strconv.Atoi(ctx.Param("user_id"))
@@ -46,11 +77,30 @@ func (svc *WebService) GetUserFollowing(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
-
-	// Return
-	ctx.IndentedJSON(http.StatusAccepted, resp.GetFollowingsIds())
+	if resp.GetStatus() == pb_aap.GetUserFollowingResponse_OK {
+		ctx.IndentedJSON(http.StatusOK, types.UserFollowingResponse{FollowingsIds: resp.GetFollowingsIds()})
+		return
+	} else if resp.GetStatus() == pb_aap.GetUserFollowingResponse_USER_NOT_FOUND {
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user not found"})
+		return
+	} else {
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
+		return
+	}
 }
 
+// FollowUser follows an user
+//
+//	@Summary		follow user
+//	@Description	follow user
+//	@Tags			friends
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		int	true	"User ID"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/friends/{user_id} [post]
 func (svc *WebService) FollowUser(ctx *gin.Context) {
 	// Check sessionId authentication
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -91,6 +141,18 @@ func (svc *WebService) FollowUser(ctx *gin.Context) {
 	}
 }
 
+// UnfollowUser unfollows an user
+//
+//	@Summary		unfollow user
+//	@Description	unfollow user
+//	@Tags			friends
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		int	true	"User ID"
+//	@Success		200		{object}	types.MessageResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/friends/{user_id} [delete]
 func (svc *WebService) UnfollowUser(ctx *gin.Context) {
 	// Check sessionId authentication
 	_, userId, err := svc.checkSessionAuthentication(ctx)
@@ -131,6 +193,18 @@ func (svc *WebService) UnfollowUser(ctx *gin.Context) {
 	}
 }
 
+// GetUserPosts get all posts an user
+//
+//	@Summary		get all posts of user
+//	@Description	get all posts user
+//	@Tags			friends
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		int	true	"User ID"
+//	@Success		200		{object}	types.UserPostsResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/friends/{user_id}/posts [get]
 func (svc *WebService) GetUserPosts(ctx *gin.Context) {
 	// Validate parameter
 	userId, err := strconv.Atoi(ctx.Param("user_id"))
@@ -152,11 +226,10 @@ func (svc *WebService) GetUserPosts(ctx *gin.Context) {
 	if resp.GetStatus() == pb_aap.GetUserPostsResponse_USER_NOT_FOUND {
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user not found"})
 	} else if resp.GetStatus() == pb_aap.GetUserPostsResponse_OK {
-		ctx.IndentedJSON(http.StatusOK, resp.GetPostsIds())
+		ctx.IndentedJSON(http.StatusOK, types.UserPostsResponse{PostsIds: resp.GetPostsIds()})
 		return
 	} else {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
 		return
 	}
-
 }
