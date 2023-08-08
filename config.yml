@@ -1,16 +1,15 @@
 # Common configurations for aap and nf
 mysql: &MYSQL
-  dsn: "quangmx:2511@tcp(192.168.0.103:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "root:123456@tcp(mysql:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local"
   defaultStringSize: 256
   disableDatetimePrecision: true
   dontSupportRenameIndex: true
   skipInitializeWithVersion: false
 redis: &REDIS
-  addr: "192.168.0.103:6379"
-  password: "2511"
+  addr: "redis:6379"
 kafka: &KAFKA
   topic: "engineerpro"
-  brokers: ["192.168.0.103:9092"]
+  brokers: ["kafka:9092"]
 
 # Configuration for aap service connection
 authenticate_and_post_config: &AAP
@@ -18,7 +17,7 @@ authenticate_and_post_config: &AAP
   mysql: *MYSQL
   redis: *REDIS
   newsfeed_publishing:
-    hosts: ["192.168.0.103:19004"]
+    hosts: ["nfp:19004"]
 
 # Configuration for nf service connection
 newsfeed_config: &NF
@@ -27,20 +26,20 @@ newsfeed_config: &NF
   redis: *REDIS
   kafka: *KAFKA
 
-# Configuration for newsfeed publishing service
+# Configuration for nfp service
 newsfeed_publishing_config: &NFP
   port: 19004
   redis: *REDIS
   kafka: *KAFKA
   authenticate_and_post:
-    hosts: ["192.168.0.103:19001"]
+    hosts: ["aap:19001"]
 
 # Configurations for web app
 web_config:
   port: 19003
   api_version: ["v1"]
   authenticate_and_post:
-    hosts: ["192.168.0.103:19001"]
+    hosts: ["aap:19001"]
   newsfeed:
-    hosts: ["192.168.0.103:19002"]
+    hosts: ["nf:19002"]
   redis: *REDIS

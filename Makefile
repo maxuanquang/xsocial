@@ -1,15 +1,9 @@
-USERNAME = "quangmx"
-PASSWORD = "2511"
-DB_HOST = "192.168.0.103"
-DB_PORT = "3306"
-
-# make new_migration MESSAGE_NAME="message name"
 new_migration:
 	migrate create -ext sql -dir scripts/migration/ -seq $(MESSAGE_NAME)
 up_migration:
-	migrate -path scripts/migration/ -database "mysql://$(USERNAME):$(PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/engineerpro?charset=utf8mb4&parseTime=True&loc=Local" -verbose up
+	migrate -path scripts/migration/ -database "mysql://root:123456@tcp(mysql:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local" -verbose up
 down_migration:
-	migrate -path scripts/migration/ -database "mysql://$(USERNAME):$(PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/engineerpro?charset=utf8mb4&parseTime=True&loc=Local" -verbose down
+	migrate -path scripts/migration/ -database "mysql://root:123456@tcp(mysql:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local" -verbose down
 proto_aap:
 	protoc --proto_path=pkg/types/proto/ --go_out=pkg/types/proto/pb/authen_and_post --go_opt=paths=source_relative \
 	--go-grpc_out=pkg/types/proto/pb/authen_and_post --go-grpc_opt=paths=source_relative --experimental_allow_proto3_optional \
@@ -29,8 +23,8 @@ vendor:
 docker_clear:
 	docker volume rm $(docker volume ls -qf dangling=true) & docker rmi $(docker images -qf "dangling=true")
 compose_up_rebuild:
-	docker compose up --build --force-recreate
+	docker-compose up --build --force-recreate
 compose_up:
-	docker compose up
+	docker-compose up
 gen_swagger:
 	swag init -g cmd/web_app/main.go

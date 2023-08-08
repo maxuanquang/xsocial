@@ -6,9 +6,9 @@ services:
       context: .
       dockerfile: cmd/web_app/Dockerfile
       target: test_env
-    image: websvc
+    image: webapp
     depends_on:
-      # - newsfeed
+      - newsfeed
       - aap
     networks:
       - intranet
@@ -34,22 +34,63 @@ services:
     ports:
       - 19001:19001
 
-  # newsfeed:
-  #   build:
-  #     context: .
-  #     dockerfile: cmd/newsfeed_svc/Dockerfile
-  #     target: test_env
-  #   image: newsfeed_svc
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - intranet
-  #   hostname: newsfeed
-  #   ports:
-  #     - 19002:19002
+  newsfeed:
+    build:
+      context: .
+      dockerfile: cmd/newsfeed_svc/Dockerfile
+      target: test_env
+    image: nfsvc
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - intranet
+    hostname: nf
+    ports:
+      - 19002:19002
+
+  nfp:
+    build:
+      context: .
+      dockerfile: cmd/newsfeed_publishing_svc/Dockerfile
+      target: test_env
+    image: nfpsvc
+    depends_on:
+      - aap
+      - kafka
+    networks:
+      - intranet
+    hostname: nfp
+    ports:
+      - 19004:19004
+  
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 0
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - intranet
+    hostname: kafka
+    ports:
+      - 9092:9092
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - intranet
+    hostname: zookeeper
+    ports:
+      - 2181:2181
 
   mysql:
     image: mysql
