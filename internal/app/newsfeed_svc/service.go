@@ -5,11 +5,15 @@ import (
 	// "encoding/json"
 	"errors"
 	"fmt"
+
 	// "reflect"
 	"strconv"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/maxuanquang/social-network/configs"
+	"github.com/maxuanquang/social-network/internal/utils"
+	"go.uber.org/zap"
+
 	// "github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_nf "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed"
 )
@@ -17,6 +21,7 @@ import (
 type NewsfeedService struct {
 	pb_nf.UnimplementedNewsfeedServer
 	redisClient *redis.Client
+	logger      *zap.Logger
 }
 
 func NewNewsfeedService(cfg *configs.NewsfeedConfig) (*NewsfeedService, error) {
@@ -26,8 +31,15 @@ func NewNewsfeedService(cfg *configs.NewsfeedConfig) (*NewsfeedService, error) {
 		return nil, errors.New("redis connection failed")
 	}
 
+	// Establish logger
+	logger, err := utils.NewLogger(&cfg.Logger)
+	if err != nil {
+		return nil, err
+	}
+
 	return &NewsfeedService{
 		redisClient: redisClient,
+		logger:      logger,
 	}, nil
 }
 

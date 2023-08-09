@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	// "fmt"
 	"log"
 	"os"
@@ -16,10 +17,12 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/maxuanquang/social-network/configs"
+	"github.com/maxuanquang/social-network/internal/utils"
 	client_aap "github.com/maxuanquang/social-network/pkg/client/authen_and_post"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 	pb_nfp "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed_publishing"
 	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 )
 
 type NewsfeedPublishingService struct {
@@ -28,6 +31,8 @@ type NewsfeedPublishingService struct {
 	kafkaReader               *kafka.Reader
 	redisClient               *redis.Client
 	authenticateAndPostClient pb_aap.AuthenticateAndPostClient
+
+	logger *zap.Logger
 }
 
 func NewNewsfeedPublishingService(cfg *configs.NewsfeedPublishingConfig) (*NewsfeedPublishingService, error) {
@@ -65,12 +70,19 @@ func NewNewsfeedPublishingService(cfg *configs.NewsfeedPublishingConfig) (*Newsf
 		return nil, err
 	}
 
+	// Establish logger
+	logger, err := utils.NewLogger(&cfg.Logger)
+	if err != nil {
+		return nil, err
+	}
+
 	// Return
 	return &NewsfeedPublishingService{
 		kafkaWriter:               kafkaWriter,
 		kafkaReader:               kafkaReader,
 		redisClient:               redisClient,
 		authenticateAndPostClient: aapClient,
+		logger:                    logger,
 	}, nil
 }
 

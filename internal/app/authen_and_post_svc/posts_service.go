@@ -19,6 +19,9 @@ import (
 )
 
 func (a *AuthenticateAndPostService) CreatePost(ctx context.Context, info *pb_aap.CreatePostRequest) (*pb_aap.CreatePostResponse, error) {
+	a.logger.Debug("start creating post")
+	defer a.logger.Debug("end creating post")
+
 	exist, _ := a.findUserById(info.GetUserId())
 	if !exist {
 		return &pb_aap.CreatePostResponse{Status: pb_aap.CreatePostResponse_USER_NOT_FOUND}, nil
@@ -51,6 +54,9 @@ func (a *AuthenticateAndPostService) CreatePost(ctx context.Context, info *pb_aa
 }
 
 func (a *AuthenticateAndPostService) EditPost(ctx context.Context, info *pb_aap.EditPostRequest) (*pb_aap.EditPostResponse, error) {
+	a.logger.Debug("start editing post")
+	defer a.logger.Debug("end editing post")
+
 	exist, user := a.findUserById(info.GetUserId())
 	if !exist {
 		return &pb_aap.EditPostResponse{Status: pb_aap.EditPostResponse_USER_NOT_FOUND}, nil
@@ -89,6 +95,9 @@ func (a *AuthenticateAndPostService) EditPost(ctx context.Context, info *pb_aap.
 }
 
 func (a *AuthenticateAndPostService) DeletePost(ctx context.Context, info *pb_aap.DeletePostRequest) (*pb_aap.DeletePostResponse, error) {
+	a.logger.Debug("start deleting post")
+	defer a.logger.Debug("end deleting post")
+
 	exist, user := a.findUserById(info.GetUserId())
 	if !exist {
 		return &pb_aap.DeletePostResponse{Status: pb_aap.DeletePostResponse_USER_NOT_FOUND}, nil
@@ -111,6 +120,9 @@ func (a *AuthenticateAndPostService) DeletePost(ctx context.Context, info *pb_aa
 }
 
 func (a *AuthenticateAndPostService) GetPostDetailInfo(ctx context.Context, info *pb_aap.GetPostDetailInfoRequest) (*pb_aap.GetPostDetailInfoResponse, error) {
+	a.logger.Debug("start getting post")
+	defer a.logger.Debug("end getting post")
+
 	exist, _ := a.findPostById(info.GetPostId())
 	if !exist {
 		return &pb_aap.GetPostDetailInfoResponse{Status: pb_aap.GetPostDetailInfoResponse_POST_NOT_FOUND}, nil
@@ -155,6 +167,9 @@ func (a *AuthenticateAndPostService) GetPostDetailInfo(ctx context.Context, info
 }
 
 func (a *AuthenticateAndPostService) CommentPost(ctx context.Context, info *pb_aap.CommentPostRequest) (*pb_aap.CommentPostResponse, error) {
+	a.logger.Debug("start commenting post")
+	defer a.logger.Debug("end commenting post")
+
 	exist, _ := a.findUserById(info.GetUserId())
 	if !exist {
 		return &pb_aap.CommentPostResponse{Status: pb_aap.CommentPostResponse_USER_NOT_FOUND}, nil
@@ -181,6 +196,9 @@ func (a *AuthenticateAndPostService) CommentPost(ctx context.Context, info *pb_a
 }
 
 func (a *AuthenticateAndPostService) LikePost(ctx context.Context, info *pb_aap.LikePostRequest) (*pb_aap.LikePostResponse, error) {
+	a.logger.Debug("start liking post")
+	defer a.logger.Debug("end liking post")
+
 	exist, user := a.findUserById(info.GetUserId())
 	if !exist {
 		return &pb_aap.LikePostResponse{Status: pb_aap.LikePostResponse_USER_NOT_FOUND}, nil
