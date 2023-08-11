@@ -9,6 +9,7 @@ import (
 	"github.com/maxuanquang/social-network/configs"
 	"github.com/maxuanquang/social-network/internal/app/web_app/service"
 	v1 "github.com/maxuanquang/social-network/internal/app/web_app/v1"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -43,6 +44,7 @@ func NewWebController(cfg *configs.WebConfig) (*WebController, error) {
 	// Init other support tools
 	initSwagger(router)
 	initPprof(router)
+	initPrometheus(router)
 
 	return &WebController{
 		webService: *webService,
@@ -64,5 +66,12 @@ func initPprof(router *gin.Engine) {
 	})
 	router.GET("/debug/pprof/trace", func(context *gin.Context) {
 		pprof.Trace(context.Writer, context.Request)
+	})
+}
+
+func initPrometheus(router *gin.Engine) {
+	handler := promhttp.Handler()
+	router.GET("/metrics", func(context *gin.Context) {
+		handler.ServeHTTP(context.Writer, context.Request)
 	})
 }

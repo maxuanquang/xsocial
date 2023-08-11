@@ -30,7 +30,7 @@ func (svc *WebService) GetUserFollower(ctx *gin.Context) {
 	}
 
 	// Call GetUserFollower gprc service
-	resp, err := svc.AuthenticateAndPostClient.GetUserFollower(ctx, &pb_aap.GetUserFollowerRequest{
+	resp, err := svc.authenticateAndPostClient.GetUserFollower(ctx, &pb_aap.GetUserFollowerRequest{
 		UserId: int64(userId),
 	})
 	if err != nil {
@@ -70,7 +70,7 @@ func (svc *WebService) GetUserFollowing(ctx *gin.Context) {
 	}
 
 	// Call GetUserFollower gprc service
-	resp, err := svc.AuthenticateAndPostClient.GetUserFollowing(ctx, &pb_aap.GetUserFollowingRequest{
+	resp, err := svc.authenticateAndPostClient.GetUserFollowing(ctx, &pb_aap.GetUserFollowingRequest{
 		UserId: int64(userId),
 	})
 	if err != nil {
@@ -117,7 +117,7 @@ func (svc *WebService) FollowUser(ctx *gin.Context) {
 	}
 
 	// Call FollowUser grpc service
-	resp, err := svc.AuthenticateAndPostClient.FollowUser(ctx,
+	resp, err := svc.authenticateAndPostClient.FollowUser(ctx,
 		&pb_aap.FollowUserRequest{
 			UserId:      int64(userId),
 			FollowingId: int64(followingId),
@@ -169,7 +169,7 @@ func (svc *WebService) UnfollowUser(ctx *gin.Context) {
 	}
 
 	// Call UnfollowUser grpc service
-	resp, err := svc.AuthenticateAndPostClient.UnfollowUser(ctx,
+	resp, err := svc.authenticateAndPostClient.UnfollowUser(ctx,
 		&pb_aap.UnfollowUserRequest{
 			UserId:      int64(userId),
 			FollowingId: int64(follwingId)},
@@ -214,7 +214,7 @@ func (svc *WebService) GetUserPosts(ctx *gin.Context) {
 	}
 
 	// Call GetUserPost grpc service
-	resp, err := svc.AuthenticateAndPostClient.GetUserPosts(ctx,
+	resp, err := svc.authenticateAndPostClient.GetUserPosts(ctx,
 		&pb_aap.GetUserPostsRequest{
 			UserId: int64(userId),
 		},

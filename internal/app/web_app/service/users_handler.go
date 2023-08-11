@@ -26,51 +26,71 @@ import (
 //	@Failure		500		{object}	types.MessageResponse
 //	@Router			/users/login [post]
 func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
+	// Metrics for Prometheus
+	svc.countReporter.WithLabelValues("check_user_login", "total").Inc()
+	var start = time.Now()
+	var end time.Time
+	var httpStatus int
+	defer func() {
+		svc.countReporter.WithLabelValues("check_user_login", strconv.Itoa(httpStatus)).Inc()
+		svc.latencyReporter.WithLabelValues("check_user_login", strconv.Itoa(httpStatus)).Observe(float64(end.UnixMilli() - start.UnixMilli()))
+	}()
+
 	// Validate request
 	var jsonRequest types.LoginRequest
 	err := ctx.ShouldBindJSON(&jsonRequest)
 	if err != nil {
+		httpStatus = http.StatusBadRequest
+		end = time.Now()
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 	err = validate.Struct(jsonRequest)
 	if err != nil {
+		httpStatus = http.StatusBadRequest
+		end = time.Now()
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
 
 	// Call CheckUserAuthentication service
-	authentication, err := svc.AuthenticateAndPostClient.CheckUserAuthentication(ctx, &pb_aap.CheckUserAuthenticationRequest{
+	resp, err := svc.authenticateAndPostClient.CheckUserAuthentication(ctx, &pb_aap.CheckUserAuthenticationRequest{
 		UserName:     jsonRequest.UserName,
 		UserPassword: jsonRequest.Password,
 	})
 	if err != nil {
+		httpStatus = http.StatusInternalServerError
+		end = time.Now()
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
 	}
-	if authentication.GetStatus() == pb_aap.CheckUserAuthenticationResponse_USER_NOT_FOUND {
-		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "wrong username or password"})
+	if resp.GetStatus() == pb_aap.CheckUserAuthenticationResponse_USER_NOT_FOUND {
+		httpStatus = http.StatusOK
+		end = time.Now()
+		ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "wrong username or password"})
 		return
-	} else if authentication.GetStatus() == pb_aap.CheckUserAuthenticationResponse_WRONG_PASSWORD {
-		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "wrong username or password"})
+	} else if resp.GetStatus() == pb_aap.CheckUserAuthenticationResponse_WRONG_PASSWORD {
+		httpStatus = http.StatusOK
+		end = time.Now()
+		ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "wrong username or password"})
 		return
-	} else if authentication.GetStatus() == pb_aap.CheckUserAuthenticationResponse_OK {
+	} else if resp.GetStatus() == pb_aap.CheckUserAuthenticationResponse_OK {
 		// Set a sessionId for this session
 		sessionId := uuid.New().String()
 
 		// Save current sessionID and expiration time in Redis
-		err = svc.RedisClient.Set(svc.RedisClient.Context(), sessionId, authentication.GetUserId(), time.Minute*15).Err()
-		if err != nil {
-			ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
-			return
-		}
+		svc.redisClient.Set(svc.redisClient.Context(), sessionId, resp.GetUserId(), time.Minute*15)
 
 		// Set sessionID cookie
 		ctx.SetCookie("session_id", sessionId, 900, "", "", false, false)
 
+		httpStatus = http.StatusOK
+		end = time.Now()
 		ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 		return
 	} else {
+		httpStatus = http.StatusInternalServerError
+		end = time.Now()
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
 		return
 	}
@@ -108,7 +128,7 @@ func (svc *WebService) CreateUser(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: err.Error()})
 		return
 	}
-	resp, err := svc.AuthenticateAndPostClient.CreateUser(ctx, &pb_aap.CreateUserRequest{
+	resp, err := svc.authenticateAndPostClient.CreateUser(ctx, &pb_aap.CreateUserRequest{
 		UserName:     jsonRequest.UserName,
 		UserPassword: jsonRequest.Password,
 		FirstName:    jsonRequest.FirstName,
@@ -190,7 +210,7 @@ func (svc *WebService) EditUser(ctx *gin.Context) {
 	}
 
 	// Call EditUser service
-	resp, err := svc.AuthenticateAndPostClient.EditUser(ctx, &pb_aap.EditUserRequest{
+	resp, err := svc.authenticateAndPostClient.EditUser(ctx, &pb_aap.EditUserRequest{
 		UserId:       int64(userId),
 		UserPassword: password,
 		FirstName:    firstName,
@@ -234,7 +254,7 @@ func (svc *WebService) GetUserDetailInfo(ctx *gin.Context) {
 	}
 
 	// Call gprc service
-	resp, err := svc.AuthenticateAndPostClient.GetUserDetailInfo(ctx, &pb_aap.GetUserDetailInfoRequest{
+	resp, err := svc.authenticateAndPostClient.GetUserDetailInfo(ctx, &pb_aap.GetUserDetailInfoRequest{
 		UserId: int64(userId),
 	})
 	if err != nil {
@@ -266,7 +286,7 @@ func (svc *WebService) checkSessionAuthentication(ctx *gin.Context) (sessionId s
 		return "", 0, err
 	}
 
-	userId, err = svc.RedisClient.Get(svc.RedisClient.Context(), sessionId).Int()
+	userId, err = svc.redisClient.Get(svc.redisClient.Context(), sessionId).Int()
 	if err != nil {
 		return "", 0, err
 	}

@@ -50,7 +50,7 @@ func (svc *WebService) CreatePost(ctx *gin.Context) {
 	if jsonRequest.Visible != nil && !*jsonRequest.Visible {
 		visible = false
 	}
-	resp, err := svc.AuthenticateAndPostClient.CreatePost(ctx, &pb_aap.CreatePostRequest{
+	resp, err := svc.authenticateAndPostClient.CreatePost(ctx, &pb_aap.CreatePostRequest{
 		UserId:           int64(userId),
 		ContentText:      jsonRequest.ContentText,
 		ContentImagePath: jsonRequest.ContentImagePath,
@@ -94,7 +94,7 @@ func (svc *WebService) GetPostDetailInfo(ctx *gin.Context) {
 	}
 
 	// Call gprc service
-	resp, err := svc.AuthenticateAndPostClient.GetPostDetailInfo(ctx, &pb_aap.GetPostDetailInfoRequest{
+	resp, err := svc.authenticateAndPostClient.GetPostDetailInfo(ctx, &pb_aap.GetPostDetailInfoRequest{
 		PostId: int64(postId),
 	})
 	if err != nil {
@@ -169,7 +169,7 @@ func (svc *WebService) EditPost(ctx *gin.Context) {
 		visible = jsonRequest.Visible
 	}
 
-	resp, err := svc.AuthenticateAndPostClient.EditPost(ctx, &pb_aap.EditPostRequest{
+	resp, err := svc.authenticateAndPostClient.EditPost(ctx, &pb_aap.EditPostRequest{
 		UserId:           int64(userId),
 		PostId:           int64(postId),
 		ContentText:      contentText,
@@ -227,7 +227,7 @@ func (svc *WebService) DeletePost(ctx *gin.Context) {
 	}
 
 	// Call grpc service
-	resp, err := svc.AuthenticateAndPostClient.DeletePost(ctx, &pb_aap.DeletePostRequest{
+	resp, err := svc.authenticateAndPostClient.DeletePost(ctx, &pb_aap.DeletePostRequest{
 		PostId: int64(postId),
 		UserId: int64(userId),
 	})
@@ -295,7 +295,7 @@ func (svc *WebService) CommentPost(ctx *gin.Context) {
 	}
 
 	// Call grpc service
-	resp, err := svc.AuthenticateAndPostClient.CommentPost(ctx,
+	resp, err := svc.authenticateAndPostClient.CommentPost(ctx,
 		&pb_aap.CommentPostRequest{
 			PostId:      int64(postId),
 			UserId:      int64(userId),
@@ -350,7 +350,7 @@ func (svc *WebService) LikePost(ctx *gin.Context) {
 	}
 
 	// Call grpc service
-	resp, err := svc.AuthenticateAndPostClient.LikePost(ctx,
+	resp, err := svc.authenticateAndPostClient.LikePost(ctx,
 		&pb_aap.LikePostRequest{
 			PostId: int64(postId),
 			UserId: int64(userId),

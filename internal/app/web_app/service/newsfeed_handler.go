@@ -29,7 +29,7 @@ func (svc *WebService) GetNewsfeed(ctx *gin.Context) {
 	}
 
 	// Call GetNewsfeed service
-	resp, err := svc.NewsfeedClient.GetNewsfeed(ctx, &pb_nf.GetNewsfeedRequest{UserId: int64(userId)})
+	resp, err := svc.newsfeedClient.GetNewsfeed(ctx, &pb_nf.GetNewsfeedRequest{UserId: int64(userId)})
 	if err != nil {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
 		return
