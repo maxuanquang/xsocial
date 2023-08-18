@@ -270,6 +270,7 @@ message LikePostResponse {
 		OK = 0;
 		POST_NOT_FOUND = 1;
 		USER_NOT_FOUND = 2;
+		ALREADY_LIKED = 3;
 	}
 	LikePostStatus status = 1;
 }

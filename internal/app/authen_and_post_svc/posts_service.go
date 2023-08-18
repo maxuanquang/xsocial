@@ -2,18 +2,16 @@ package authen_and_post_svc
 
 import (
 	"context"
-	// "encoding/json"
+	"encoding/json"
 	"errors"
-	"time"
-
-	// "encoding/json"
-	// "errors"
+	"fmt"
+	"reflect"
 	"strings"
+	"time"
 
 	"github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 	pb_nfp "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed_publishing"
-	// "github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
@@ -89,6 +87,8 @@ func (a *AuthenticateAndPostService) EditPost(ctx context.Context, info *pb_aap.
 	if err != nil {
 		return nil, err
 	}
+	a.redisClient.Del(ctx, fmt.Sprintf("posts:%d", post.ID), fmt.Sprintf("comments_ids:%d", post.ID), fmt.Sprintf("liked_users_ids:%d", post.ID))
+
 	return &pb_aap.EditPostResponse{
 		Status: pb_aap.EditPostResponse_OK,
 	}, nil
@@ -114,6 +114,8 @@ func (a *AuthenticateAndPostService) DeletePost(ctx context.Context, info *pb_aa
 	if err != nil {
 		return nil, err
 	}
+	a.redisClient.Del(ctx, fmt.Sprintf("posts:%d", post.ID), fmt.Sprintf("comments_ids:%d", post.ID), fmt.Sprintf("liked_users_ids:%d", post.ID))
+
 	return &pb_aap.DeletePostResponse{
 		Status: pb_aap.DeletePostResponse_OK,
 	}, nil
@@ -123,15 +125,22 @@ func (a *AuthenticateAndPostService) GetPostDetailInfo(ctx context.Context, info
 	a.logger.Debug("start getting post")
 	defer a.logger.Debug("end getting post")
 
-	exist, _ := a.findPostById(info.GetPostId())
-	if !exist {
-		return &pb_aap.GetPostDetailInfoResponse{Status: pb_aap.GetPostDetailInfoResponse_POST_NOT_FOUND}, nil
-	}
-
 	var post types.Post
-	result := a.db.Preload("Comments").Preload("LikedUsers").First(&post, info.GetPostId())
-	if result.Error != nil {
-		return nil, result.Error
+	post, cached := a.findPostInCache(info.GetPostId())
+	if !cached {
+		a.logger.Debug("post is not cached, getting post from db")
+		exist, _ := a.findPostById(info.GetPostId())
+		if !exist {
+			return &pb_aap.GetPostDetailInfoResponse{Status: pb_aap.GetPostDetailInfoResponse_POST_NOT_FOUND}, nil
+		}
+
+		result := a.db.Preload("Comments").Preload("LikedUsers").First(&post, info.GetPostId())
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		a.logger.Debug("done getting post from db")
+
+		a.cachePost(&post)
 	}
 
 	var comments []*pb_aap.Comment
@@ -189,6 +198,18 @@ func (a *AuthenticateAndPostService) CommentPost(ctx context.Context, info *pb_a
 		return nil, err
 	}
 
+	a.cacheObject(&newComment, fmt.Sprintf("comment:%d", newComment.ID), 15*time.Minute)
+	postKey := fmt.Sprintf("post:%d", newComment.PostID)
+	commentsIdsKey := fmt.Sprintf("comments_ids:%d", newComment.PostID)
+	likedUsersIdsKey := fmt.Sprintf("liked_users_ids:%d", newComment.PostID)
+	keyExist := a.redisClient.Exists(context.Background(), postKey, commentsIdsKey, likedUsersIdsKey).Val()
+	if keyExist == 3 {
+		a.redisClient.RPush(context.Background(), commentsIdsKey, newComment.ID)
+		a.redisClient.Expire(context.Background(), postKey, 15*time.Minute)
+		a.redisClient.Expire(context.Background(), commentsIdsKey, 15*time.Minute)
+		a.redisClient.Expire(context.Background(), likedUsersIdsKey, 15*time.Minute)
+	}
+
 	return &pb_aap.CommentPostResponse{
 		Status:    pb_aap.CommentPostResponse_OK,
 		CommentId: int64(newComment.ID),
@@ -199,7 +220,7 @@ func (a *AuthenticateAndPostService) LikePost(ctx context.Context, info *pb_aap.
 	a.logger.Debug("start liking post")
 	defer a.logger.Debug("end liking post")
 
-	exist, user := a.findUserById(info.GetUserId())
+	exist, _ := a.findUserById(info.GetUserId())
 	if !exist {
 		return &pb_aap.LikePostResponse{Status: pb_aap.LikePostResponse_USER_NOT_FOUND}, nil
 	}
@@ -208,17 +229,205 @@ func (a *AuthenticateAndPostService) LikePost(ctx context.Context, info *pb_aap.
 		return &pb_aap.LikePostResponse{Status: pb_aap.LikePostResponse_POST_NOT_FOUND}, nil
 	}
 
-	var post types.Post
-	err := a.db.Preload("LikedUsers").First(&post, info.GetPostId()).Error
-	if err != nil {
-		return nil, err
+	var like types.Like
+	a.db.Raw("select * from `like` where user_id = ? and post_id = ?", info.GetUserId(), info.GetPostId()).Scan(&like)
+	fmt.Println(like)
+	if like.UserId != 0 && like.PostId != 0 {
+		return &pb_aap.LikePostResponse{
+			Status: pb_aap.LikePostResponse_ALREADY_LIKED,
+		}, nil
+	} else {
+		rowsAffected := a.db.Exec("insert into `like` (user_id, post_id) values (?, ?)",
+			info.GetUserId(),
+			info.GetPostId(),
+		).RowsAffected
+		if rowsAffected == 0 {
+			return nil, fmt.Errorf("can not insert into `like` table")
+		}
 	}
-	err = a.db.Model(&post).Association("LikedUsers").Append(&user)
-	if err != nil {
-		return nil, err
+
+	postKey := fmt.Sprintf("post:%d", info.GetPostId())
+	commentsIdsKey := fmt.Sprintf("comments_ids:%d", info.GetPostId())
+	likedUsersIdsKey := fmt.Sprintf("liked_users_ids:%d", info.GetPostId())
+	keyExist := a.redisClient.Exists(context.Background(), postKey, commentsIdsKey, likedUsersIdsKey).Val()
+	if keyExist == 3 {
+		a.redisClient.RPush(context.Background(), likedUsersIdsKey, info.GetUserId())
+		a.redisClient.Expire(context.Background(), postKey, 15*time.Minute)
+		a.redisClient.Expire(context.Background(), commentsIdsKey, 15*time.Minute)
+		a.redisClient.Expire(context.Background(), likedUsersIdsKey, 15*time.Minute)
 	}
 
 	return &pb_aap.LikePostResponse{
 		Status: pb_aap.LikePostResponse_OK,
 	}, nil
+}
+
+// findPostById checks if a post with provided postId exists in database
+func (a *AuthenticateAndPostService) findPostById(postId int64) (exist bool, post types.Post) {
+	result := a.db.First(&post, postId)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return false, types.Post{}
+	}
+	return true, post
+}
+
+// cachPost caches post and relevant information in cache
+func (a *AuthenticateAndPostService) cachePost(post *types.Post) error {
+	a.logger.Debug("start caching post")
+	defer a.logger.Debug("end caching post")
+
+	// Only cache post when len(comments_ids) > 0 and len(liked_users_ids) > 0
+	if len(post.Comments) == 0 || len(post.LikedUsers) == 0 {
+		return fmt.Errorf("do not cache because length of comments or liked_users equal 0")
+	}
+
+	// Cache comments ids
+	var commentsIds []interface{}
+	for _, comment := range post.Comments {
+		commentsIds = append(commentsIds, comment.ID)
+	}
+	commentsIdsKey := fmt.Sprintf("comments_ids:%d", post.ID)
+	a.redisClient.RPush(context.Background(), commentsIdsKey, commentsIds...)
+	a.redisClient.Expire(context.Background(), commentsIdsKey, 15*time.Minute)
+
+	// Cache liked users ids
+	var likeUsersIds []interface{}
+	for _, user := range post.LikedUsers {
+		likeUsersIds = append(likeUsersIds, user.ID)
+	}
+	likedUsersKey := fmt.Sprintf("liked_users_ids:%d", post.ID)
+	a.redisClient.RPush(context.Background(), likedUsersKey, likeUsersIds...)
+	a.redisClient.Expire(context.Background(), likedUsersKey, 15*time.Minute)
+
+	// Cache each comment
+	for _, comment := range post.Comments {
+		commentKey := fmt.Sprintf("comment:%d", comment.ID)
+		a.cacheObject(comment, commentKey, 15*time.Minute)
+	}
+
+	// Cache each user
+	for _, user := range post.LikedUsers {
+		userKey := fmt.Sprintf("user:%d", user.ID)
+		a.cacheObject(user, userKey, 15*time.Minute)
+	}
+
+	// Cache metadata of post (comments and liked users are not included - they have their own redis key above)
+	postKey := fmt.Sprintf("post:%d", post.ID)
+	a.cacheObject(&types.Post{
+		Model:            post.Model,
+		ContentText:      post.ContentText,
+		ContentImagePath: post.ContentImagePath,
+		UserID:           post.UserID,
+	}, postKey, 15*time.Minute)
+
+	return nil
+}
+
+// findPostInCache checks if a post with provided postId exists in cache
+func (a *AuthenticateAndPostService) findPostInCache(postId int64) (types.Post, bool) {
+	// Check all relevant cache keys
+	keyExist := a.redisClient.Exists(context.Background(),
+		fmt.Sprintf("post:%d", int(postId)),
+		fmt.Sprintf("comments_ids:%d", int(postId)),
+		fmt.Sprintf("liked_users_ids:%d", int(postId)),
+	).Val()
+	if keyExist != 3 {
+		return types.Post{}, false
+	}
+
+	// Get post from redis
+	var post types.Post
+	postKey := fmt.Sprintf("post:%d", int(postId))
+	err := a.getObjectFromCache(postKey, &post, 15*time.Minute)
+	if err != nil {
+		return types.Post{}, false
+	}
+
+	// Get comments from redis
+	commentsIdsKey := fmt.Sprintf("comments_ids:%d", int(postId))
+	commentsIds := a.redisClient.LRange(context.Background(), commentsIdsKey, 0, -1).Val()
+	a.redisClient.Expire(context.Background(), commentsIdsKey, 15*time.Minute)
+
+	var comments []*types.Comment
+	for _, comment_id := range commentsIds {
+		var comment types.Comment
+		commentKey := "comment:" + comment_id
+		err := a.getObjectFromCache(commentKey, &comment, 15*time.Minute)
+		if err != nil {
+			return types.Post{}, false
+		}
+		comments = append(comments, &comment)
+	}
+
+	// Get post's likes from redis
+	likedUsersIdsKey := fmt.Sprintf("liked_users_ids:%d", int(postId))
+	likedUsersIds, err := a.redisClient.LRange(context.Background(), likedUsersIdsKey, 0, -1).Result()
+	if err != nil {
+		return types.Post{}, false
+	}
+	a.redisClient.Expire(context.Background(), likedUsersIdsKey, 15*time.Minute)
+	var likedUsers []*types.User
+	for _, user_id := range likedUsersIds {
+		var user types.User
+		userKey := "user:" + user_id
+		err := a.getObjectFromCache(userKey, &user, 15*time.Minute)
+		if err != nil {
+			return types.Post{}, false
+		}
+		likedUsers = append(likedUsers, &user)
+	}
+
+	// return
+	post.Comments = comments
+	post.LikedUsers = likedUsers
+	return post, true
+}
+
+func (a *AuthenticateAndPostService) cacheObject(objectPointer interface{}, cacheKey string, expireTime time.Duration) error {
+	objValue := reflect.ValueOf(objectPointer)
+	if objValue.Kind() != reflect.Ptr || objValue.IsNil() {
+		return fmt.Errorf("obj must be a non-nil pointer to a struct")
+	}
+
+	keyExist := a.redisClient.Exists(context.Background(), cacheKey).Val()
+	if keyExist == 1 {
+		a.redisClient.Expire(context.Background(), cacheKey, expireTime)
+		return nil
+	} else {
+		byteObj, err := json.Marshal(objectPointer)
+		if err != nil {
+			a.logger.Debug(err.Error())
+			return err
+		} else {
+			a.redisClient.Set(context.Background(), cacheKey, byteObj, expireTime)
+			return nil
+		}
+	}
+}
+
+func (a *AuthenticateAndPostService) getObjectFromCache(cacheKey string, objectPointer interface{}, newExpireTime time.Duration) error {
+	objValue := reflect.ValueOf(objectPointer)
+	if objValue.Kind() != reflect.Ptr || objValue.IsNil() {
+		return fmt.Errorf("obj must be a non-nil pointer to a struct")
+	}
+
+	keyExist := a.redisClient.Exists(context.Background(), cacheKey).Val()
+	if keyExist == 0 {
+		a.logger.Debug(fmt.Sprintf("%s does not exist in redis", cacheKey))
+		return fmt.Errorf("%s does not exist in redis", cacheKey)
+	}
+
+	byteObj, err := a.redisClient.Get(context.Background(), cacheKey).Bytes()
+	if err != nil {
+		a.logger.Debug(err.Error())
+		return err
+	}
+	a.redisClient.Expire(context.Background(), cacheKey, newExpireTime)
+	err = json.Unmarshal(byteObj, &objectPointer)
+	if err != nil {
+		a.logger.Debug(err.Error())
+		return err
+	}
+
+	return nil
 }

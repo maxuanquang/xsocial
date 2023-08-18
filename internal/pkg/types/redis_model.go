@@ -30,13 +30,13 @@ type RedisPost struct {
 }
 
 type RedisComment struct {
-	ID        int64  `json:"id"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
-	DeletedAt int64  `json:"deleted_at"`
-	PostID    int64  `json:"post_id"`
-	UserID    int64  `json:"user_id"`
-	Content   string `json:"content"`
+	ID          int64  `json:"id"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+	DeletedAt   int64  `json:"deleted_at"`
+	PostID      int64  `json:"post_id"`
+	UserID      int64  `json:"user_id"`
+	ContentText string `json:"content_text"`
 }
 
 type RedisLike struct {

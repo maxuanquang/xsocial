@@ -4,16 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-
-	// "fmt"
+	"fmt"
 	"log"
 	"os"
-	"strconv"
-
-	// "time"
-
-	// "strings"
-	// "time"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/maxuanquang/social-network/configs"
@@ -131,24 +125,10 @@ func (svc *NewsfeedPublishingService) processPost(value []byte) {
 		panic(err)
 	}
 
-	// // Try to get distributed lock
-	// lockName := "lock-post:" + strconv.Itoa(int(postDetailInfo.GetId()))
-	// svc.acquireDistributedLock(lockName)
-	// defer svc.releaseDistributedLock(lockName)
-
-	// // Do following works
-	// // 1. Create a post object in redis
-	// postKey := "post:" + strconv.Itoa(int(postDetailInfo.GetId()))
-	// mapRedisPost := svc.newMapRedisPost(&postDetailInfo)
-	// _, err = svc.redisClient.HSet(context.Background(), postKey, mapRedisPost).Result()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// 2. Find followers of user that created post
-	followersKey := "followers:" + strconv.Itoa(int(message["user_id"]))
-	numKey, _ := svc.redisClient.Exists(context.Background(), followersKey).Result()
-	if numKey == 0 {
+	// Find followers of user that created post
+	followersKey := fmt.Sprintf("followers:%d", message["user_id"])
+	exist := (svc.redisClient.Exists(context.Background(), followersKey).Val() == 1)
+	if !exist {
 		resp, err := svc.authenticateAndPostClient.GetUserFollower(
 			context.Background(),
 			&pb_aap.GetUserFollowerRequest{
@@ -158,26 +138,20 @@ func (svc *NewsfeedPublishingService) processPost(value []byte) {
 			panic(err)
 		}
 
-		followersIds := resp.GetFollowersIds()
-		for _, id := range followersIds {
-			_, err = svc.redisClient.RPush(context.Background(), followersKey, id).Result()
-			if err != nil {
-				panic(err)
-			}
+		var followersIds []interface{}
+		for _, id := range resp.GetFollowersIds() {
+			followersIds = append(followersIds, id)
 		}
+		svc.redisClient.RPush(context.Background(), followersKey, followersIds...)
+		svc.redisClient.Expire(context.Background(), followersKey, 15*time.Minute)
 	}
-	followersIds, err := svc.redisClient.LRange(context.Background(), followersKey, 0, -1).Result()
-	if err != nil {
-		panic(err)
-	}
+	followersIds := svc.redisClient.LRange(context.Background(), followersKey, 0, -1).Val()
 
-	// 3. Add this post_id into followers' newsfeed
+	// Add this post_id into followers' newsfeed
 	for _, id := range followersIds {
-		newsfeedKey := "newsfeed:" + id
-		_, err := svc.redisClient.RPush(context.Background(), newsfeedKey, message["post_id"]).Result()
-		if err != nil {
-			panic(err)
-		}
+		newsfeedKey := fmt.Sprintf("newsfeed:%s", id)
+		svc.redisClient.RPush(context.Background(), newsfeedKey, message["post_id"])
+		svc.redisClient.Expire(context.Background(), newsfeedKey, 15*time.Minute)
 	}
 }
 

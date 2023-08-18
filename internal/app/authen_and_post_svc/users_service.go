@@ -2,7 +2,9 @@ package authen_and_post_svc
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/maxuanquang/social-network/internal/auth"
 	"github.com/maxuanquang/social-network/internal/pkg/types"
@@ -105,6 +107,27 @@ func (a *AuthenticateAndPostService) EditUser(ctx context.Context, info *pb_aap.
 }
 
 func (a *AuthenticateAndPostService) GetUserDetailInfo(ctx context.Context, info *pb_aap.GetUserDetailInfoRequest) (*pb_aap.GetUserDetailInfoResponse, error) {
+	userKey := fmt.Sprintf("user:%d", info.GetUserId())
+	cacheExist := (a.redisClient.Exists(context.Background(), userKey).Val() == 1)
+	if cacheExist {
+		userJson := a.redisClient.Get(context.Background(), userKey).Val()
+		var user types.User
+		err := json.Unmarshal([]byte(userJson), &user)
+		if err == nil {
+			return &pb_aap.GetUserDetailInfoResponse{
+				Status: pb_aap.GetUserDetailInfoResponse_OK,
+				User: &pb_aap.UserDetailInfo{
+					UserId:      int64(user.ID),
+					UserName:    user.UserName,
+					FirstName:   user.FirstName,
+					LastName:    user.LastName,
+					DateOfBirth: timestamppb.New(user.DateOfBirth),
+					Email:       user.Email,
+				},
+			}, nil
+		}
+	}
+
 	exist, user := a.findUserById(info.GetUserId())
 	if !exist {
 		return &pb_aap.GetUserDetailInfoResponse{Status: pb_aap.GetUserDetailInfoResponse_USER_NOT_FOUND}, nil

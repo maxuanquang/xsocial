@@ -39,11 +39,19 @@ func (Post) TableName() string {
 
 type Comment struct {
 	gorm.Model
-	ContentText string `gorm:"size:100000;not null" json:"content"`
+	ContentText string `gorm:"size:100000;not null" json:"content_text"`
 	PostID      int64  `gorm:"not null" json:"post_id"`
 	UserID      int64  `gorm:"not null" json:"user_id"`
 }
 
 func (Comment) TableName() string {
 	return "comment"
+}
+
+type Like struct {
+	CreatedAt time.Time `gorm:"not null"`
+	UpdatedAt time.Time `gorm:"not null"`
+	DeletedAt time.Time
+	PostId    int64 `gorm:"not null"`
+	UserId    int64 `gorm:"not null"`
 }

@@ -45,7 +45,7 @@ func NewNewsfeedService(cfg *configs.NewsfeedConfig) (*NewsfeedService, error) {
 
 func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.GetNewsfeedRequest) (*pb_nf.GetNewsfeedResponse, error) {
 	// Query newsfeed from redis
-	newsfeedKey := "newsfeed:" + fmt.Sprint(request.GetUserId())
+	newsfeedKey := fmt.Sprintf("newsfeed:%d", request.GetUserId())
 	postsIds, err := svc.redisClient.LPopCount(svc.redisClient.Context(), newsfeedKey, 5).Result()
 	if errors.Is(err, redis.Nil) {
 		return &pb_nf.GetNewsfeedResponse{
@@ -59,6 +59,7 @@ func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.GetN
 	for _, id := range postsIds {
 		intPostId, err := strconv.Atoi(id)
 		if err != nil {
+			svc.logger.Debug(err.Error())
 			continue
 		}
 		int64PostsIds = append(int64PostsIds, int64(intPostId))
@@ -73,70 +74,3 @@ func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.GetN
 		PostsIds: int64PostsIds,
 	}, nil
 }
-
-// func (svc *NewsfeedService) getPostFromRedis(ctx context.Context, key string) (*types.RedisPost, error) {
-// 	mapRedisPost, err := svc.redisClient.HGetAll(ctx, key).Result()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	var redisPost types.RedisPost
-// 	err = svc.unmarshal(mapRedisPost, &redisPost)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &redisPost, nil
-// }
-
-// func (svc *NewsfeedService) getCommentFromRedis(ctx context.Context, key string) (*types.RedisComment, error) {
-// 	mapRedisComment, err := svc.redisClient.HGetAll(ctx, key).Result()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	var redisComment types.RedisComment
-// 	err = svc.unmarshal(mapRedisComment, &redisComment)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &redisComment, nil
-// }
-
-// // unmarshal converts map[string]string to a struct.
-// // It takes name of each field in map[string]string and maps with json tags in target struct
-// func (svc *NewsfeedService) unmarshal(sourceMap map[string]string, objectPointer interface{}) error {
-// 	objValue := reflect.ValueOf(objectPointer)
-// 	if objValue.Kind() != reflect.Ptr || objValue.IsNil() {
-// 		return fmt.Errorf("obj must be a non-nil pointer to a struct")
-// 	}
-
-// 	// Iterate over struct fields
-// 	for i := 0; i < objValue.Elem().NumField(); i++ {
-// 		field := objValue.Elem().Field(i)
-
-// 		jsonTag := objValue.Elem().Type().Field(i).Tag.Get("json")
-// 		mapValue, ok := sourceMap[jsonTag]
-// 		if !ok || len(mapValue) == 0 {
-// 			continue
-// 		}
-
-// 		switch field.Kind() {
-// 		case reflect.Int64:
-// 			intValue, err := strconv.ParseInt(mapValue, 10, 64)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			field.SetInt(intValue)
-// 		case reflect.String:
-// 			field.SetString(mapValue)
-// 		case reflect.Bool:
-// 			boolValue, err := strconv.ParseBool(mapValue)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			field.SetBool(boolValue)
-// 		}
-// 	}
-// 	return nil
-// }

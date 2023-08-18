@@ -3,6 +3,7 @@ package authen_and_post_svc
 import (
 	"errors"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/maxuanquang/social-network/configs"
 	"github.com/maxuanquang/social-network/internal/pkg/types"
 	"github.com/maxuanquang/social-network/internal/utils"
@@ -18,6 +19,7 @@ type AuthenticateAndPostService struct {
 	pb_aap.UnimplementedAuthenticateAndPostServer
 	db          *gorm.DB
 	nfPubClient pb_nfp.NewsfeedPublishingClient
+	redisClient *redis.Client
 
 	logger *zap.Logger
 }
@@ -38,6 +40,15 @@ func NewAuthenticateAndPostService(cfg *configs.AuthenticateAndPostConfig) (*Aut
 		return nil, err
 	}
 
+	redisClient := redis.NewClient(
+		&redis.Options{
+			Addr:     cfg.Redis.Addr,
+			Password: cfg.Redis.Password,
+		})
+	if redisClient == nil {
+		return nil, errors.New("redis connection failed")
+	}
+
 	// Establish logger
 	logger, err := utils.NewLogger(&cfg.Logger)
 	if err != nil {
@@ -47,6 +58,7 @@ func NewAuthenticateAndPostService(cfg *configs.AuthenticateAndPostConfig) (*Aut
 	return &AuthenticateAndPostService{
 		db:          db,
 		nfPubClient: nfPubClient,
+		redisClient: redisClient,
 		logger:      logger,
 	}, nil
 }
@@ -67,13 +79,4 @@ func (a *AuthenticateAndPostService) findUserByUserName(userName string) (exist 
 		return false, types.User{}
 	}
 	return true, user
-}
-
-// findPostById checks if an user with provided userId exists in database
-func (a *AuthenticateAndPostService) findPostById(postId int64) (exist bool, post types.Post) {
-	result := a.db.First(&post, postId)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return false, types.Post{}
-	}
-	return true, post
 }

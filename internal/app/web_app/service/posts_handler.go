@@ -365,7 +365,9 @@ func (svc *WebService) LikePost(ctx *gin.Context) {
 	} else if resp.GetStatus() == pb_aap.LikePostResponse_USER_NOT_FOUND {
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "user not found"})
 		return
-
+	} else if resp.GetStatus() == pb_aap.LikePostResponse_ALREADY_LIKED {
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "already liked"})
+		return	
 	} else if resp.GetStatus() == pb_aap.LikePostResponse_OK {
 		ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
 		return
