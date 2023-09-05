@@ -1,0 +1,20 @@
+syntax = "proto3";
+option go_package = "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed";
+package newsfeed;
+
+service Newsfeed {
+    rpc GetNewsfeed(GetNewsfeedRequest) returns (GetNewsfeedResponse) {}
+}
+
+message GetNewsfeedRequest {
+    int64 user_id = 1;
+}
+
+message GetNewsfeedResponse {
+    enum GetNewsfeedStatus {
+        OK = 0;
+        NEWSFEED_EMPTY = 1;
+    }
+    GetNewsfeedStatus status = 1;
+    repeated int64 posts_ids = 2;
+}
