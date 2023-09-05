@@ -46,7 +46,7 @@ func NewNewsfeedService(cfg *configs.NewsfeedConfig) (*NewsfeedService, error) {
 func (svc *NewsfeedService) GetNewsfeed(ctx context.Context, request *pb_nf.GetNewsfeedRequest) (*pb_nf.GetNewsfeedResponse, error) {
 	// Query newsfeed from redis
 	newsfeedKey := fmt.Sprintf("newsfeed:%d", request.GetUserId())
-	postsIds, err := svc.redisClient.LPopCount(svc.redisClient.Context(), newsfeedKey, 5).Result()
+	postsIds, err := svc.redisClient.ZRevRange(svc.redisClient.Context(), newsfeedKey, 0, -1).Result()
 	if errors.Is(err, redis.Nil) {
 		return &pb_nf.GetNewsfeedResponse{
 			Status: pb_nf.GetNewsfeedResponse_NEWSFEED_EMPTY,

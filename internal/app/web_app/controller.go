@@ -3,8 +3,10 @@ package web_app
 import (
 	"fmt"
 
+	"net/http"
 	"net/http/pprof"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/maxuanquang/social-network/configs"
 	"github.com/maxuanquang/social-network/internal/app/web_app/service"
@@ -34,9 +36,22 @@ func NewWebController(cfg *configs.WebConfig) (*WebController, error) {
 
 	// Init router
 	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowCredentials: true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Cookie"},
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
+		ExposeHeaders: []string{"Set-Cookie"},
+	}))
+
+	// Register http end points
+	router.StaticFS("/public", http.Dir("./web/public"))
 	for _, version := range cfg.APIVersions {
 		verXRouter := router.Group(fmt.Sprint("/api/" + version))
-		if version == "v1" { // TODO: Automate this when a new vision is added
+		// TODO: Automate applying new API version
+		if version == "v1" {
 			v1.AddAllRouter(verXRouter, webService)
 		}
 	}

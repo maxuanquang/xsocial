@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // import "time"
 
 // MessageResponse return message in response.
@@ -41,11 +43,23 @@ type NewsfeedResponse struct {
 	PostsIds []int64 `json:"posts_ids"`
 }
 
-type UserDetailInfoResponse struct {
-	UserID      int64  `json:"user_id"`
-	UserName    string `json:"user_name"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	DateOfBirth string `json:"date_of_birth"`
-	Email       string `json:"email"`
+type LoginResponse struct {
+	Message string         `json:"message"`
+	User    UserDetailInfo `json:"user"`
+}
+
+type UserDetailInfo struct {
+	UserID         int64  `json:"user_id"`
+	UserName       string `json:"user_name"`
+	FirstName      string `json:"first_name"`
+	LastName       string `json:"last_name"`
+	DateOfBirth    string `json:"date_of_birth"`
+	Email          string `json:"email"`
+	ProfilePicture string `json:"profile_picture"`
+	CoverPicture   string `json:"cover_picture"`
+}
+
+type GetS3PresignedUrlResponse struct {
+	Url            string    `json:"url"`
+	ExpirationTime time.Time `json:"expiration_time"`
 }

@@ -19,19 +19,18 @@ type LoginRequest struct {
 }
 
 type CreateUserRequest struct {
-	UserName    string `json:"user_name" validate:"required,user_name"`
-	Password    string `json:"password" validate:"required,password"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	DateOfBirth string `json:"date_of_birth" validate:"required,date_of_birth"`
-	Email       string `json:"email" validate:"required,email"`
+	UserName string `json:"user_name" validate:"required,user_name"`
+	Password string `json:"password" validate:"required,password"`
+	Email    string `json:"email" validate:"required,email"`
 }
 
 type EditUserRequest struct {
-	Password    string `json:"password" validate:"omitempty,password"`
-	FirstName   string `json:"first_name" validate:"omitempty"`
-	LastName    string `json:"last_name" validate:"omitempty"`
-	DateOfBirth string `json:"date_of_birth" validate:"omitempty,date_of_birth"`
+	Password       *string `json:"password" validate:"omitempty,password"`
+	FirstName      *string `json:"first_name" validate:"omitempty"`
+	LastName       *string `json:"last_name" validate:"omitempty"`
+	DateOfBirth    *string `json:"date_of_birth" validate:"omitempty,date_of_birth"`
+	ProfilePicture *string `json:"profile_picture" validate:"omitempty,url"`
+	CoverPicture   *string `json:"cover_picture" validate:"omitempty,url"`
 }
 
 type CreatePostRequest struct {

@@ -34,6 +34,7 @@ const (
 	AuthenticateAndPost_DeletePost_FullMethodName              = "/authen_and_post.AuthenticateAndPost/DeletePost"
 	AuthenticateAndPost_CommentPost_FullMethodName             = "/authen_and_post.AuthenticateAndPost/CommentPost"
 	AuthenticateAndPost_LikePost_FullMethodName                = "/authen_and_post.AuthenticateAndPost/LikePost"
+	AuthenticateAndPost_GetS3PresignedUrl_FullMethodName       = "/authen_and_post.AuthenticateAndPost/GetS3PresignedUrl"
 )
 
 // AuthenticateAndPostClient is the client API for AuthenticateAndPost service.
@@ -58,6 +59,7 @@ type AuthenticateAndPostClient interface {
 	DeletePost(ctx context.Context, in *DeletePostRequest, opts ...grpc.CallOption) (*DeletePostResponse, error)
 	CommentPost(ctx context.Context, in *CommentPostRequest, opts ...grpc.CallOption) (*CommentPostResponse, error)
 	LikePost(ctx context.Context, in *LikePostRequest, opts ...grpc.CallOption) (*LikePostResponse, error)
+	GetS3PresignedUrl(ctx context.Context, in *GetS3PresignedUrlRequest, opts ...grpc.CallOption) (*GetS3PresignedUrlResponse, error)
 }
 
 type authenticateAndPostClient struct {
@@ -203,6 +205,15 @@ func (c *authenticateAndPostClient) LikePost(ctx context.Context, in *LikePostRe
 	return out, nil
 }
 
+func (c *authenticateAndPostClient) GetS3PresignedUrl(ctx context.Context, in *GetS3PresignedUrlRequest, opts ...grpc.CallOption) (*GetS3PresignedUrlResponse, error) {
+	out := new(GetS3PresignedUrlResponse)
+	err := c.cc.Invoke(ctx, AuthenticateAndPost_GetS3PresignedUrl_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthenticateAndPostServer is the server API for AuthenticateAndPost service.
 // All implementations must embed UnimplementedAuthenticateAndPostServer
 // for forward compatibility
@@ -225,6 +236,7 @@ type AuthenticateAndPostServer interface {
 	DeletePost(context.Context, *DeletePostRequest) (*DeletePostResponse, error)
 	CommentPost(context.Context, *CommentPostRequest) (*CommentPostResponse, error)
 	LikePost(context.Context, *LikePostRequest) (*LikePostResponse, error)
+	GetS3PresignedUrl(context.Context, *GetS3PresignedUrlRequest) (*GetS3PresignedUrlResponse, error)
 	mustEmbedUnimplementedAuthenticateAndPostServer()
 }
 
@@ -276,6 +288,9 @@ func (UnimplementedAuthenticateAndPostServer) CommentPost(context.Context, *Comm
 }
 func (UnimplementedAuthenticateAndPostServer) LikePost(context.Context, *LikePostRequest) (*LikePostResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LikePost not implemented")
+}
+func (UnimplementedAuthenticateAndPostServer) GetS3PresignedUrl(context.Context, *GetS3PresignedUrlRequest) (*GetS3PresignedUrlResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetS3PresignedUrl not implemented")
 }
 func (UnimplementedAuthenticateAndPostServer) mustEmbedUnimplementedAuthenticateAndPostServer() {}
 
@@ -560,6 +575,24 @@ func _AuthenticateAndPost_LikePost_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthenticateAndPost_GetS3PresignedUrl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetS3PresignedUrlRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticateAndPostServer).GetS3PresignedUrl(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticateAndPost_GetS3PresignedUrl_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticateAndPostServer).GetS3PresignedUrl(ctx, req.(*GetS3PresignedUrlRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthenticateAndPost_ServiceDesc is the grpc.ServiceDesc for AuthenticateAndPost service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -626,6 +659,10 @@ var AuthenticateAndPost_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LikePost",
 			Handler:    _AuthenticateAndPost_LikePost_Handler,
+		},
+		{
+			MethodName: "GetS3PresignedUrl",
+			Handler:    _AuthenticateAndPost_GetS3PresignedUrl_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

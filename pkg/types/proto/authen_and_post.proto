@@ -25,8 +25,10 @@ service AuthenticateAndPost {
 	rpc DeletePost(DeletePostRequest) returns (DeletePostResponse) {}
 	rpc CommentPost(CommentPostRequest) returns (CommentPostResponse) {}
 	rpc LikePost(LikePostRequest) returns (LikePostResponse) {}
+	rpc GetS3PresignedUrl(GetS3PresignedUrlRequest) returns (GetS3PresignedUrlResponse) {}
 
-	// TODO: Create more APIs
+	// TODO: Messenger APIs
+	// TODO: Notification APIs
 }
 
 message CheckUserAuthenticationRequest {
@@ -41,15 +43,12 @@ message CheckUserAuthenticationResponse {
 		WRONG_PASSWORD = 2;
 	}
 	CheckUserAuthenticationStatus status = 1;
-	int64 user_id = 2;
+	UserDetailInfo user = 2;
 }
 
 message CreateUserRequest {
 	string user_name = 2;
 	string user_password = 3;
-	string first_name = 4;
-	string last_name = 5;
-	google.protobuf.Timestamp date_of_birth = 6;
 	string email = 7;
 }
 
@@ -69,6 +68,8 @@ message EditUserRequest {
 	optional string first_name = 3;
 	optional string last_name = 4;
 	optional google.protobuf.Timestamp date_of_birth = 5;
+	optional string profile_picture = 6;
+	optional string cover_picture = 7;
 }
 
 message EditUserResponse {
@@ -99,6 +100,8 @@ message UserDetailInfo {
 	string last_name = 4;
 	google.protobuf.Timestamp date_of_birth = 5;
 	string email = 6;
+	string profile_picture = 7;
+	string cover_picture = 8;
 }
 
 message GetUserFollowerRequest {
@@ -113,11 +116,6 @@ message GetUserFollowerResponse {
 	GetUserFollowerStatus status = 1;
 	repeated int64 followersIds = 2;
 }
-
-// message UserInfo {
-// 	string user_name = 1;
-// 	int64 user_id = 2;
-// }
 
 message GetUserFollowingRequest {
 	int64 user_id = 1;
@@ -273,6 +271,18 @@ message LikePostResponse {
 		ALREADY_LIKED = 3;
 	}
 	LikePostStatus status = 1;
+}
+
+message GetS3PresignedUrlRequest {}
+
+message GetS3PresignedUrlResponse {
+	enum GetS3PresignedUrlStatus {
+		OK = 0;
+		FAIL = 1;
+	}
+	GetS3PresignedUrlStatus status = 1;
+	string url = 2;
+	google.protobuf.Timestamp expiration_time = 3;
 }
 
 message PostDetailInfo {

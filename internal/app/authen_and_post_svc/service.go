@@ -3,7 +3,10 @@ package authen_and_post_svc
 import (
 	"errors"
 
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-redis/redis/v8"
+	"github.com/joho/godotenv"
 	"github.com/maxuanquang/social-network/configs"
 	"github.com/maxuanquang/social-network/internal/pkg/types"
 	"github.com/maxuanquang/social-network/internal/utils"
@@ -20,6 +23,7 @@ type AuthenticateAndPostService struct {
 	db          *gorm.DB
 	nfPubClient pb_nfp.NewsfeedPublishingClient
 	redisClient *redis.Client
+	s3Client    *s3.S3
 
 	logger *zap.Logger
 }
@@ -49,6 +53,12 @@ func NewAuthenticateAndPostService(cfg *configs.AuthenticateAndPostConfig) (*Aut
 		return nil, errors.New("redis connection failed")
 	}
 
+	// Establish s3 client
+	s3Client, err := NewS3Client()
+	if err != nil {
+		return nil, err
+	}
+
 	// Establish logger
 	logger, err := utils.NewLogger(&cfg.Logger)
 	if err != nil {
@@ -59,8 +69,25 @@ func NewAuthenticateAndPostService(cfg *configs.AuthenticateAndPostConfig) (*Aut
 		db:          db,
 		nfPubClient: nfPubClient,
 		redisClient: redisClient,
+		s3Client:    s3Client,
 		logger:      logger,
 	}, nil
+}
+
+func NewS3Client() (*s3.S3, error) {
+	err := godotenv.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize a session
+	sess, err := session.NewSession()
+	if err != nil {
+		return nil, err
+	}
+
+	// Return S3 service client
+	return s3.New(sess), nil
 }
 
 // findUserById checks if an user with provided userId exists in database
