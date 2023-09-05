@@ -6,9 +6,11 @@ type RedisUser struct {
 	Salt           []byte `json:"salt"`
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
-	DOB            int64  `json:"dob"`
+	DateOfBirth    int64  `json:"date_of_birth"`
 	Email          string `json:"email"`
 	UserName       string `json:"user_name"`
+	ProfilePicture string `json:"profile_picture"`
+	CoverPicture   string `json:"cover_picture"`
 }
 
 type RedisFollowing struct {

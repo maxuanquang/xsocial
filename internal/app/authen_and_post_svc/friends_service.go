@@ -207,7 +207,7 @@ func (a *AuthenticateAndPostService) GetUserPosts(ctx context.Context, info *pb_
 	}
 
 	var user types.User
-	a.db.Preload("Posts").First(&user, info.GetUserId())
+	a.db.Raw("select * from post where user_id = ? order by created_at desc", info.GetUserId()).Scan(&user.Posts)
 
 	// Return
 	var posts_ids []int64

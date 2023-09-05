@@ -1,6 +1,7 @@
 package types
 
 import (
+	"database/sql"
 	"time"
 
 	"gorm.io/gorm"
@@ -8,16 +9,18 @@ import (
 
 type User struct {
 	gorm.Model
-	HashedPassword string    `gorm:"size:1000;not null" json:"hashed_password"`
-	Salt           []byte    `gorm:"size:1000;not null" json:"salt"`
-	FirstName      string    `gorm:"size:50;not null" json:"first_name"`
-	LastName       string    `gorm:"size:50;not null" json:"last_name"`
-	DateOfBirth    time.Time `gorm:"not null" json:"dob"`
-	Email          string    `gorm:"size:50;not null" json:"email"`
-	UserName       string    `gorm:"size:50;not null" json:"user_name"`
+	HashedPassword string       `gorm:"size:1000;not null" json:"hashed_password"`
+	Salt           []byte       `gorm:"size:1000;not null" json:"salt"`
+	FirstName      string       `gorm:"size:50" json:"first_name"`
+	LastName       string       `gorm:"size:50" json:"last_name"`
+	DateOfBirth    sql.NullTime `json:"date_of_birth"`
+	Email          string       `gorm:"size:50;not null" json:"email"`
+	UserName       string       `gorm:"size:50;not null" json:"user_name"`
 	Posts          []*Post
 	Followers      []*User `gorm:"many2many:following"`
 	Followings     []*User `gorm:"many2many:following;joinForeignKey:follower_id;joinReferences:user_id"`
+	ProfilePicture string  `gorm:"size:500" json:"profile_picture"`
+	CoverPicture   string  `gorm:"size:500" json:"cover_picture"`
 }
 
 func (User) TableName() string {

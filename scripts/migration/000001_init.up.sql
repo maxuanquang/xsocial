@@ -9,11 +9,13 @@ CREATE TABLE IF NOT EXISTS `user` (
     deleted_at TIMESTAMP NULL,
     hashed_password VARCHAR(1000) NOT NULL,
     salt VARBINARY(1000) NOT NULL,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    date_of_birth TIMESTAMP NOT NULL,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    date_of_birth TIMESTAMP,
     email VARCHAR(100) NOT NULL,
     user_name VARCHAR(50) UNIQUE NOT NULL,
+    profile_picture VARCHAR(500),
+    cover_picture VARCHAR(500),
     PRIMARY KEY (id),
     INDEX idx_username (user_name)
 );
@@ -39,18 +41,6 @@ CREATE TABLE IF NOT EXISTS `post` (
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES `user`(id)
 );
-
--- -- Create a trigger follows the post table
--- CREATE TRIGGER delete_post
--- BEFORE UPDATE ON `post`
--- FOR EACH ROW
--- BEGIN
---     IF NEW.visible = 0 THEN
---         SET NEW.deleted_at = CURRENT_TIMESTAMP;
---     ELSE
---         SET NEW.deleted_at = NULL;
---     END IF;
--- END;
 
 -- Create the comment table
 CREATE TABLE IF NOT EXISTS `comment` (

@@ -41,8 +41,9 @@ func (a *AuthenticateAndPostService) CreatePost(ctx context.Context, info *pb_aa
 
 	// Send user_id and post_id to NewsfeedPublishingClient to announce to followers
 	a.nfPubClient.PublishPost(ctx, &pb_nfp.PublishPostRequest{
-		UserId: newPost.UserID,
-		PostId: int64(newPost.ID),
+		UserId:    newPost.UserID,
+		PostId:    int64(newPost.ID),
+		CreatedAt: timestamppb.New(newPost.CreatedAt),
 	})
 
 	return &pb_aap.CreatePostResponse{

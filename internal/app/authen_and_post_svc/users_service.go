@@ -2,6 +2,7 @@ package authen_and_post_svc
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,9 +35,6 @@ func (a *AuthenticateAndPostService) CreateUser(ctx context.Context, info *pb_aa
 	newUser := types.User{
 		HashedPassword: hashed_password,
 		Salt:           salt,
-		FirstName:      info.GetFirstName(),
-		LastName:       info.GetLastName(),
-		DateOfBirth:    info.GetDateOfBirth().AsTime(),
 		Email:          info.GetEmail(),
 		UserName:       info.GetUserName(),
 	}
@@ -69,7 +67,16 @@ func (a *AuthenticateAndPostService) CheckUserAuthentication(ctx context.Context
 
 	return &pb_aap.CheckUserAuthenticationResponse{
 		Status: pb_aap.CheckUserAuthenticationResponse_OK,
-		UserId: int64(user.ID),
+		User: &pb_aap.UserDetailInfo{
+			UserId:         int64(user.ID),
+			UserName:       user.UserName,
+			FirstName:      user.FirstName,
+			LastName:       user.LastName,
+			DateOfBirth:    timestamppb.New(user.DateOfBirth.Time),
+			Email:          user.Email,
+			ProfilePicture: user.ProfilePicture,
+			CoverPicture:   user.CoverPicture,
+		},
 	}, nil
 }
 
@@ -85,7 +92,7 @@ func (a *AuthenticateAndPostService) EditUser(ctx context.Context, info *pb_aap.
 		user.LastName = info.GetLastName()
 	}
 	if info.DateOfBirth != nil {
-		user.DateOfBirth = info.GetDateOfBirth().AsTime()
+		user.DateOfBirth = sql.NullTime{Time: info.GetDateOfBirth().AsTime()}
 	}
 	if info.UserPassword != nil {
 		salt, err := auth.GenerateRandomSalt()
@@ -98,6 +105,12 @@ func (a *AuthenticateAndPostService) EditUser(ctx context.Context, info *pb_aap.
 		}
 		user.Salt = salt
 		user.HashedPassword = hashed_password
+	}
+	if info.ProfilePicture != nil {
+		user.ProfilePicture = info.GetProfilePicture()
+	}
+	if info.CoverPicture != nil {
+		user.CoverPicture = info.GetCoverPicture()
 	}
 	a.db.Save(&user)
 
@@ -121,7 +134,7 @@ func (a *AuthenticateAndPostService) GetUserDetailInfo(ctx context.Context, info
 					UserName:    user.UserName,
 					FirstName:   user.FirstName,
 					LastName:    user.LastName,
-					DateOfBirth: timestamppb.New(user.DateOfBirth),
+					DateOfBirth: timestamppb.New(user.DateOfBirth.Time),
 					Email:       user.Email,
 				},
 			}, nil
@@ -140,7 +153,7 @@ func (a *AuthenticateAndPostService) GetUserDetailInfo(ctx context.Context, info
 			UserName:    user.UserName,
 			FirstName:   user.FirstName,
 			LastName:    user.LastName,
-			DateOfBirth: timestamppb.New(user.DateOfBirth),
+			DateOfBirth: timestamppb.New(user.DateOfBirth.Time),
 			Email:       user.Email,
 		},
 	}, nil

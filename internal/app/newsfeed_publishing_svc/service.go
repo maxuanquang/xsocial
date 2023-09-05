@@ -82,8 +82,9 @@ func NewNewsfeedPublishingService(cfg *configs.NewsfeedPublishingConfig) (*Newsf
 
 func (svc *NewsfeedPublishingService) PublishPost(ctx context.Context, info *pb_nfp.PublishPostRequest) (*pb_nfp.PublishPostResponse, error) {
 	value := map[string]int64{
-		"user_id": info.GetUserId(),
-		"post_id": info.GetPostId(),
+		"user_id":    info.GetUserId(),
+		"post_id":    info.GetPostId(),
+		"created_at": info.GetCreatedAt().GetSeconds(),
 	}
 	jsonValue, _ := json.Marshal(value)
 	err := svc.kafkaWriter.WriteMessages(ctx, kafka.Message{
@@ -150,7 +151,10 @@ func (svc *NewsfeedPublishingService) processPost(value []byte) {
 	// Add this post_id into followers' newsfeed
 	for _, id := range followersIds {
 		newsfeedKey := fmt.Sprintf("newsfeed:%s", id)
-		svc.redisClient.RPush(context.Background(), newsfeedKey, message["post_id"])
+		svc.redisClient.ZAdd(context.Background(), newsfeedKey, &redis.Z{
+			Score:  float64(message["created_at"]),
+			Member: message["post_id"],
+		})
 		svc.redisClient.Expire(context.Background(), newsfeedKey, 15*time.Minute)
 	}
 }
