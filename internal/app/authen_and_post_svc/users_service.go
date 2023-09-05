@@ -42,6 +42,12 @@ func (a *AuthenticateAndPostService) CreateUser(ctx context.Context, info *pb_aa
 	if result.Error != nil {
 		return nil, result.Error
 	}
+	
+	// The user follows herself in default
+	a.FollowUser(ctx, &pb_aap.FollowUserRequest{
+		UserId: int64(newUser.ID),
+		FollowingId: int64(newUser.ID),
+	})
 
 	return &pb_aap.CreateUserResponse{
 		Status: pb_aap.CreateUserResponse_OK,

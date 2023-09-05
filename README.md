@@ -1,4 +1,6 @@
-# Golang Social Network
+# Simple Golang Social Network Management Backend Service
+
+This is a simple golang social network backend service designed in microservices. The front-end code can be found here: https://github.com/maxuanquang/social-network-fe
 
 ## I. System Requirement
 
@@ -46,3 +48,11 @@
 
 ![Alt text](docs/high_level_design.png "a title")
 
+## VI. How to Run
+1. Start all services: `make compose_up_rebuild`
+2. Migrate database: `make up_migration`
+3. By default, the web server runs at: `localhost:19003`
+## VII. TODO
+- Set up Cloudfront CDN for S3 bucket
+- Add Realtime Notifications Service
+- Add Realtime Chat Service
