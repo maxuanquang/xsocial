@@ -380,7 +380,7 @@ func (svc *WebService) LikePost(ctx *gin.Context) {
 // GetS3PresignedUrl gets a presigned url for uploading pictures
 //
 //	@Summary		get presigned url
-//	@Description	get preseigned url
+//	@Description	get presigned url
 //	@Tags			posts
 //	@Accept			json
 //	@Produce		json

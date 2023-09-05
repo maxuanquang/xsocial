@@ -400,6 +400,50 @@
                 }
             }
         },
+        "/posts/url": {
+            "get": {
+                "description": "get presigned url",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "get presigned url",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "post_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GetS3PresignedUrlResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/types.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/posts/{post_id}": {
             "get": {
                 "description": "get post detail information",
@@ -613,19 +657,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.MessageResponse"
+                            "$ref": "#/definitions/types.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/types.MessageResponse"
+                            "$ref": "#/definitions/types.LoginResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/types.MessageResponse"
+                            "$ref": "#/definitions/types.LoginResponse"
                         }
                     }
                 }
@@ -703,7 +747,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.UserDetailInfoResponse"
+                            "$ref": "#/definitions/types.UserDetailInfo"
                         }
                     },
                     "400": {
@@ -774,22 +818,12 @@
         "types.CreateUserRequest": {
             "type": "object",
             "required": [
-                "date_of_birth",
                 "email",
                 "password",
                 "user_name"
             ],
             "properties": {
-                "date_of_birth": {
-                    "type": "string"
-                },
                 "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
                     "type": "string"
                 },
                 "password": {
@@ -803,6 +837,9 @@
         "types.EditUserRequest": {
             "type": "object",
             "properties": {
+                "cover_picture": {
+                    "type": "string"
+                },
                 "date_of_birth": {
                     "type": "string"
                 },
@@ -813,6 +850,20 @@
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "profile_picture": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GetS3PresignedUrlResponse": {
+            "type": "object",
+            "properties": {
+                "expiration_time": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }
@@ -829,6 +880,17 @@
                 },
                 "user_name": {
                     "type": "string"
+                }
+            }
+        },
+        "types.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/types.UserDetailInfo"
                 }
             }
         },
@@ -886,9 +948,12 @@
                 }
             }
         },
-        "types.UserDetailInfoResponse": {
+        "types.UserDetailInfo": {
             "type": "object",
             "properties": {
+                "cover_picture": {
+                    "type": "string"
+                },
                 "date_of_birth": {
                     "type": "string"
                 },
@@ -899,6 +964,9 @@
                     "type": "string"
                 },
                 "last_name": {
+                    "type": "string"
+                },
+                "profile_picture": {
                     "type": "string"
                 },
                 "user_id": {

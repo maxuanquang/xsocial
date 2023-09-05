@@ -33,26 +33,21 @@ definitions:
     type: object
   types.CreateUserRequest:
     properties:
-      date_of_birth:
-        type: string
       email:
-        type: string
-      first_name:
-        type: string
-      last_name:
         type: string
       password:
         type: string
       user_name:
         type: string
     required:
-    - date_of_birth
     - email
     - password
     - user_name
     type: object
   types.EditUserRequest:
     properties:
+      cover_picture:
+        type: string
       date_of_birth:
         type: string
       first_name:
@@ -60,6 +55,15 @@ definitions:
       last_name:
         type: string
       password:
+        type: string
+      profile_picture:
+        type: string
+    type: object
+  types.GetS3PresignedUrlResponse:
+    properties:
+      expiration_time:
+        type: string
+      url:
         type: string
     type: object
   types.LoginRequest:
@@ -71,6 +75,13 @@ definitions:
     required:
     - password
     - user_name
+    type: object
+  types.LoginResponse:
+    properties:
+      message:
+        type: string
+      user:
+        $ref: '#/definitions/types.UserDetailInfo'
     type: object
   types.MessageResponse:
     properties:
@@ -107,8 +118,10 @@ definitions:
           type: integer
         type: array
     type: object
-  types.UserDetailInfoResponse:
+  types.UserDetailInfo:
     properties:
+      cover_picture:
+        type: string
       date_of_birth:
         type: string
       email:
@@ -116,6 +129,8 @@ definitions:
       first_name:
         type: string
       last_name:
+        type: string
+      profile_picture:
         type: string
       user_id:
         type: integer
@@ -501,6 +516,35 @@ paths:
       summary: like post
       tags:
       - posts
+  /posts/url:
+    get:
+      consumes:
+      - application/json
+      description: get presigned url
+      parameters:
+      - description: Post ID
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GetS3PresignedUrlResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.MessageResponse'
+      summary: get presigned url
+      tags:
+      - posts
   /users/{user_id}:
     get:
       consumes:
@@ -518,7 +562,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.UserDetailInfoResponse'
+            $ref: '#/definitions/types.UserDetailInfo'
         "400":
           description: Bad Request
           schema:
@@ -578,15 +622,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.MessageResponse'
+            $ref: '#/definitions/types.LoginResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/types.MessageResponse'
+            $ref: '#/definitions/types.LoginResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/types.MessageResponse'
+            $ref: '#/definitions/types.LoginResponse'
       summary: Check user's username and password
       tags:
       - users

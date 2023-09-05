@@ -408,6 +408,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/posts/url": {
+            "get": {
+                "description": "get presigned url",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "get presigned url",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "post_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GetS3PresignedUrlResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/types.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/posts/{post_id}": {
             "get": {
                 "description": "get post detail information",
@@ -621,19 +665,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.MessageResponse"
+                            "$ref": "#/definitions/types.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/types.MessageResponse"
+                            "$ref": "#/definitions/types.LoginResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/types.MessageResponse"
+                            "$ref": "#/definitions/types.LoginResponse"
                         }
                     }
                 }
@@ -711,7 +755,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.UserDetailInfoResponse"
+                            "$ref": "#/definitions/types.UserDetailInfo"
                         }
                     },
                     "400": {
@@ -782,22 +826,12 @@ const docTemplate = `{
         "types.CreateUserRequest": {
             "type": "object",
             "required": [
-                "date_of_birth",
                 "email",
                 "password",
                 "user_name"
             ],
             "properties": {
-                "date_of_birth": {
-                    "type": "string"
-                },
                 "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
                     "type": "string"
                 },
                 "password": {
@@ -811,6 +845,9 @@ const docTemplate = `{
         "types.EditUserRequest": {
             "type": "object",
             "properties": {
+                "cover_picture": {
+                    "type": "string"
+                },
                 "date_of_birth": {
                     "type": "string"
                 },
@@ -821,6 +858,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "profile_picture": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GetS3PresignedUrlResponse": {
+            "type": "object",
+            "properties": {
+                "expiration_time": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }
@@ -837,6 +888,17 @@ const docTemplate = `{
                 },
                 "user_name": {
                     "type": "string"
+                }
+            }
+        },
+        "types.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/types.UserDetailInfo"
                 }
             }
         },
@@ -894,9 +956,12 @@ const docTemplate = `{
                 }
             }
         },
-        "types.UserDetailInfoResponse": {
+        "types.UserDetailInfo": {
             "type": "object",
             "properties": {
+                "cover_picture": {
+                    "type": "string"
+                },
                 "date_of_birth": {
                     "type": "string"
                 },
@@ -907,6 +972,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "last_name": {
+                    "type": "string"
+                },
+                "profile_picture": {
                     "type": "string"
                 },
                 "user_id": {

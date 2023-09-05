@@ -265,7 +265,7 @@ func (svc *WebService) EditUser(ctx *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			user_id	path		int	true	"User ID"
-//	@Success		200		{object}	types.UserDetailInfoResponse
+//	@Success		200		{object}	types.UserDetailInfo
 //	@Failure		400		{object}	types.MessageResponse
 //	@Failure		500		{object}	types.MessageResponse
 //	@Router			/users/{user_id} [get]
