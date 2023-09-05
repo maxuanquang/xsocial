@@ -2,6 +2,8 @@
 
 This is a simple golang social network backend service designed in microservices. The front-end code can be found here: https://github.com/maxuanquang/social-network-fe
 
+<img src="docs/demo.png" width="800">
+
 ## I. System Requirement
 
 ***Design a simple social network like Facebook***
@@ -42,11 +44,11 @@ This is a simple golang social network backend service designed in microservices
 
 ## IV. Define Data Model
 
-![Alt text](docs/models.png "a title")
+<img src="docs/models.png" width="800">
 
 ## V. High Level Design
 
-![Alt text](docs/high_level_design.png "a title")
+<img src="docs/high_level_design.png" width="800">
 
 ## VI. How to Run
 1. Start all services: `make compose_up_rebuild`
