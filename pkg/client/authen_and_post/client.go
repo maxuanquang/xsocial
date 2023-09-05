@@ -96,3 +96,7 @@ func (a *randomClient) CommentPost(ctx context.Context, in *pb.CommentPostReques
 func (a *randomClient) LikePost(ctx context.Context, in *pb.LikePostRequest, opts ...grpc.CallOption) (*pb.LikePostResponse, error) {
 	return a.clients[rand.Intn(len(a.clients))].LikePost(ctx, in, opts...)
 }
+
+func (a *randomClient) GetS3PresignedUrl(ctx context.Context, in *pb.GetS3PresignedUrlRequest, opts ...grpc.CallOption) (*pb.GetS3PresignedUrlResponse, error) {
+	return a.clients[rand.Intn(len(a.clients))].GetS3PresignedUrl(ctx, in, opts...)
+}

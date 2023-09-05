@@ -210,6 +210,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.0
+	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.16.0
 	github.com/segmentio/kafka-go v0.4.40
 	golang.org/x/net v0.14.0 // indirect

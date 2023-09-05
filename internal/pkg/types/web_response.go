@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // import "time"
 
 // MessageResponse return message in response.
@@ -55,4 +57,9 @@ type UserDetailInfo struct {
 	Email          string `json:"email"`
 	ProfilePicture string `json:"profile_picture"`
 	CoverPicture   string `json:"cover_picture"`
+}
+
+type GetS3PresignedUrlResponse struct {
+	Url            string    `json:"url"`
+	ExpirationTime time.Time `json:"expiration_time"`
 }

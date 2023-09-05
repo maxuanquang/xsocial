@@ -38,10 +38,11 @@ func NewWebController(cfg *configs.WebConfig) (*WebController, error) {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
 		AllowCredentials: true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Cookie"},
 		AllowOriginFunc: func(origin string) bool {
 			return true
 		},
-		AllowHeaders:  []string{"Content-Type", "Cookie"},
 		ExposeHeaders: []string{"Set-Cookie"},
 	}))
 

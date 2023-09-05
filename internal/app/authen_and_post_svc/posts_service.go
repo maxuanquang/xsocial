@@ -2,13 +2,18 @@ package authen_and_post_svc
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/maxuanquang/social-network/internal/pkg/types"
 	pb_aap "github.com/maxuanquang/social-network/pkg/types/proto/pb/authen_and_post"
 	pb_nfp "github.com/maxuanquang/social-network/pkg/types/proto/pb/newsfeed_publishing"
@@ -111,6 +116,22 @@ func (a *AuthenticateAndPostService) DeletePost(ctx context.Context, info *pb_aa
 		return &pb_aap.DeletePostResponse{Status: pb_aap.DeletePostResponse_NOT_ALLOWED}, nil
 	}
 
+	// Delete image on S3
+	imgPaths := strings.Split(post.ContentImagePath, " ")
+	for _, path := range imgPaths {
+		components := strings.Split(path, "/")
+		key := components[len(components)-1]
+
+		_, err := a.s3Client.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
+			Key:    aws.String(key),
+		})
+		if err != nil {
+			a.logger.Error(err.Error())
+		}
+	}
+
+	// Delete post in db
 	err := a.db.Delete(&post).Error
 	if err != nil {
 		return nil, err
@@ -260,6 +281,33 @@ func (a *AuthenticateAndPostService) LikePost(ctx context.Context, info *pb_aap.
 
 	return &pb_aap.LikePostResponse{
 		Status: pb_aap.LikePostResponse_OK,
+	}, nil
+}
+
+func (a *AuthenticateAndPostService) GetS3PresignedUrl(ctx context.Context, info *pb_aap.GetS3PresignedUrlRequest) (*pb_aap.GetS3PresignedUrlResponse, error) {
+	a.logger.Debug("start getting s3 presigned url")
+	defer a.logger.Debug("end getting s3 presigned url")
+
+	// userExist, _ := a.findUserById(info.GetUserId())
+	// if !userExist {
+	// 	return &pb_aap.GetS3PresignedUrlResponse{Status: pb_aap.GetS3PresignedUrlResponse_USER_NOT_FOUND}, nil
+	// }
+
+	req, _ := a.s3Client.PutObjectRequest(&s3.PutObjectInput{
+		Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
+		Key:    aws.String(a.getRandomS3Key(64)),
+	})
+	url, err := req.Presign(time.Minute)
+	expirationTime := time.Now().Add(time.Minute)
+	if err != nil {
+		a.logger.Error(err.Error())
+		return nil, err
+	}
+
+	return &pb_aap.GetS3PresignedUrlResponse{
+		Status:         pb_aap.GetS3PresignedUrlResponse_OK,
+		Url:            url,
+		ExpirationTime: timestamppb.New(expirationTime),
 	}, nil
 }
 
@@ -431,4 +479,13 @@ func (a *AuthenticateAndPostService) getObjectFromCache(cacheKey string, objectP
 	}
 
 	return nil
+}
+
+func (a *AuthenticateAndPostService) getRandomS3Key(length int) string {
+	randomBytes := make([]byte, 64)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		panic(err)
+	}
+	return base64.StdEncoding.EncodeToString(randomBytes)[:length]
 }

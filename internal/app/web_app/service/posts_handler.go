@@ -367,9 +367,47 @@ func (svc *WebService) LikePost(ctx *gin.Context) {
 		return
 	} else if resp.GetStatus() == pb_aap.LikePostResponse_ALREADY_LIKED {
 		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "already liked"})
-		return	
+		return
 	} else if resp.GetStatus() == pb_aap.LikePostResponse_OK {
 		ctx.IndentedJSON(http.StatusOK, types.MessageResponse{Message: "OK"})
+		return
+	} else {
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})
+		return
+	}
+}
+
+// GetS3PresignedUrl gets a presigned url for uploading pictures
+//
+//	@Summary		get presigned url
+//	@Description	get preseigned url
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			post_id	path		int	true	"Post ID"
+//	@Success		200		{object}	types.GetS3PresignedUrlResponse
+//	@Failure		400		{object}	types.MessageResponse
+//	@Failure		500		{object}	types.MessageResponse
+//	@Router			/posts/url [get]
+func (svc *WebService) GetS3PresignedUrl(ctx *gin.Context) {
+	// Check session
+	_, _, err := svc.checkSessionAuthentication(ctx)
+	if err != nil {
+		ctx.IndentedJSON(http.StatusUnauthorized, types.MessageResponse{Message: err.Error()})
+		return
+	}
+
+	// Call grpc service
+	resp, err := svc.authenticateAndPostClient.GetS3PresignedUrl(ctx, &pb_aap.GetS3PresignedUrlRequest{})
+	if err != nil {
+		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: err.Error()})
+		return
+	}
+	if resp.GetStatus() == pb_aap.GetS3PresignedUrlResponse_FAIL {
+		ctx.IndentedJSON(http.StatusBadRequest, types.MessageResponse{Message: "fail getting url"})
+		return
+	} else if resp.GetStatus() == pb_aap.GetS3PresignedUrlResponse_OK {
+		ctx.IndentedJSON(http.StatusOK, types.GetS3PresignedUrlResponse{Url: resp.Url, ExpirationTime: resp.ExpirationTime.AsTime()})
 		return
 	} else {
 		ctx.IndentedJSON(http.StatusInternalServerError, types.MessageResponse{Message: "unknown error"})

@@ -25,8 +25,10 @@ service AuthenticateAndPost {
 	rpc DeletePost(DeletePostRequest) returns (DeletePostResponse) {}
 	rpc CommentPost(CommentPostRequest) returns (CommentPostResponse) {}
 	rpc LikePost(LikePostRequest) returns (LikePostResponse) {}
+	rpc GetS3PresignedUrl(GetS3PresignedUrlRequest) returns (GetS3PresignedUrlResponse) {}
 
-	// TODO: Create more APIs
+	// TODO: Messenger APIs
+	// TODO: Notification APIs
 }
 
 message CheckUserAuthenticationRequest {
@@ -269,6 +271,18 @@ message LikePostResponse {
 		ALREADY_LIKED = 3;
 	}
 	LikePostStatus status = 1;
+}
+
+message GetS3PresignedUrlRequest {}
+
+message GetS3PresignedUrlResponse {
+	enum GetS3PresignedUrlStatus {
+		OK = 0;
+		FAIL = 1;
+	}
+	GetS3PresignedUrlStatus status = 1;
+	string url = 2;
+	google.protobuf.Timestamp expiration_time = 3;
 }
 
 message PostDetailInfo {
