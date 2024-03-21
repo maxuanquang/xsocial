@@ -1,0 +1,122 @@
+.topbarContainer {
+    height: 50px;
+    width: 100%;
+    background-color: #1877f2;
+    display: flex;
+    align-items: center;
+    z-index: 999;
+
+    /* Make position of top bar stick to top whenever we scroll */
+    position: sticky;
+    top: 0;
+}
+
+/* Divide the topbarContainer into 12 parts, 3 of that is topbarLeft, 5 is center and 4 is right */
+
+/* Config for left */
+.topbarLeft {
+    flex: 3;
+}
+
+.logo {
+    font-size: 24px;
+    margin-left: 20px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+}
+
+/* Config for center */
+.topbarCenter {
+    flex: 5;
+}
+
+.searchbar {
+    width: 100%;
+    height: 30px;
+    background-color: white;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    margin-left: 40px;
+}
+
+.searchIcon {
+    font-size: 20px !important;
+    margin-left: 10px;
+    margin-right: 3px;
+    cursor: pointer;
+}
+
+.searchInput {
+    border: none;
+    width: 90%;
+}
+
+.searchInput:focus {
+    outline: none;
+}
+
+/* Config for right */
+.topbarRight {
+    flex: 4;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    color: white;
+}
+
+.topbarLink {
+    margin-right: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.topbarIcons {
+    display: flex;
+}
+
+.topbarIconItem {
+    margin-right: 18px;
+    cursor: pointer;
+    position: relative;
+}
+
+.topbarIconBadge {
+    width: 15px;
+    height: 15px;
+    background-color: red;
+    border-radius: 50%;
+    color: white;
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.topbarRight {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.topbarImg {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    margin-right: 20px;
+}
+
+.topbarLogout {
+    border: none;
+    padding: 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-right: 20px;
+}

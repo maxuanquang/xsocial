@@ -1,0 +1,64 @@
+version: '3'
+services:
+ 
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 0
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - intranet
+    hostname: kafka
+    ports:
+      - 9092:9092
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - intranet
+    hostname: zookeeper
+    ports:
+      - 2181:2181
+
+  mysql:
+    image: mysql
+    volumes:
+      - ./mysql/my.cnf:/etc/mysql/my.cnf  # Global default settings
+      - ./data/mysql:/var/lib/mysql  # Data of databases
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: engineerpro
+    networks:
+      - intranet
+    hostname: mysql
+    ports:
+      - 3306:3306
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:latest
+    networks:
+      - intranet
+    hostname: redis
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+
+networks:
+  intranet: {}
+  default: {}
