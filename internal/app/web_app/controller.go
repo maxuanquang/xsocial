@@ -1,12 +1,14 @@
 package web_app
 
 import (
+	// "context"
 	"fmt"
 
-	"net/http"
+	// "net/http"
 	"net/http/pprof"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/maxuanquang/social-network/configs"
 	"github.com/maxuanquang/social-network/internal/app/web_app/service"
@@ -46,8 +48,9 @@ func NewWebController(cfg *configs.WebConfig) (*WebController, error) {
 		ExposeHeaders: []string{"Set-Cookie"},
 	}))
 
-	// Register http end points
-	router.StaticFS("/public", http.Dir("./web/public"))
+	// Serve frontend static files
+	router.Use(static.Serve("/", static.LocalFile("./web/build", true)))
+
 	for _, version := range cfg.APIVersions {
 		verXRouter := router.Group(fmt.Sprint("/api/" + version))
 		// TODO: Automate applying new API version

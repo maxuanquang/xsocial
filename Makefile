@@ -28,3 +28,6 @@ compose_up:
 	docker-compose up
 gen_swagger:
 	swag init -g cmd/web_app/main.go
+
+build_web:
+	cd web && npm install && npm run build && cd ..
