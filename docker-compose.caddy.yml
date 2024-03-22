@@ -10,6 +10,7 @@ services:
       - aap
       - newsfeed
       - nfp
+      - caddy
     networks:
       - intranet
       - default
@@ -131,6 +132,17 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       timeout: 1s
       retries: 3
+
+  caddy:
+    image: caddy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - intranet
 
 networks:
   intranet: {}

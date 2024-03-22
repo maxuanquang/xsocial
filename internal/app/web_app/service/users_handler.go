@@ -82,8 +82,6 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 		svc.redisClient.Set(svc.redisClient.Context(), sessionId, resp.GetUser().GetUserId(), time.Minute*15)
 
 		// Set sessionID cookie
-		// (this cookie is currently not working on Google Chrome)
-		// TODO: Add HTTPS for cookie to work properly
 		http.SetCookie(ctx.Writer, &http.Cookie{
 			Name:     "session_id",
 			Value:    sessionId,
@@ -91,8 +89,8 @@ func (svc *WebService) CheckUserAuthentication(ctx *gin.Context) {
 			Path:     "/",
 			Domain:   "",
 			SameSite: http.SameSiteNoneMode,
-			Secure:   false,
-			HttpOnly: false,
+			Secure:   true,
+			HttpOnly: true,
 		})
 
 		httpStatus = http.StatusOK

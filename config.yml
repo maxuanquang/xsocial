@@ -1,6 +1,6 @@
 # Common configurations for aap and nf
 mysql: &MYSQL
-  dsn: "root:123456@tcp(mysql:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "root:123456@tcp(0.0.0.0:3306)/engineerpro?charset=utf8mb4&parseTime=True&loc=Local"
   defaultStringSize: 256
   disableDatetimePrecision: true
   dontSupportRenameIndex: true
