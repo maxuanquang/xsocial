@@ -1,60 +1,81 @@
-# Simple Golang Social Network Management Backend Service
-
-This is a simple golang social network backend service designed in microservices. The front-end code can be found here: https://github.com/maxuanquang/social-network-fe
+<h1 align="center">XSocial</h1>
 
 <img src="docs/demo.png" width="800">
 
-## I. System Requirement
+## Table of contents
 
-***Design a simple social network like Facebook***
+- [Description](#description)
+- [Installation](#installation)
+  - [Requirements](#requirements)
+  - [Cloning the Project](#cloning-the-project)
+  - [Setting Up Environment Variables](#setting-up-environment-variables)
+  - [Building the Frontend](#building-the-frontend)
+  - [Setting Up Caddy Reverse Proxy](#setting-up-caddy-reverse-proxy)
+  - [Running Docker Compose](#running-docker-compose)
+  - [Database Migration](#database-migration)
 
-- This repository implements newsfeed and user's personal timeline for a simple social network.
-- This social network allows users to write posts, give reactions and comments to posts, follow other users, see other users' timeline. All the changes of an user and who he is following can be seen on newsfeed.
+## Description
 
+XSocial is a simple social networking service with basic functionalities such as posting, liking, commenting, and viewing newsfeeds. It is designed to be easily hosted on a local machine or in the cloud.
 
-## II. Requirements Clarifications
+## Installation
 
-- The system just includes users (no *pages*, *groups*, etc.).
-- Newsfeed is the homepage when logging in social network. Newsfeed includes changes (new posts, react to posts, follow other users, etc.) of an user and who he is following. All the posts are sorted based on recommendation or timeline.
-- User's personal timeline is the page which includes that user's information and posts, the posts are sorted based on posted time.  
-- Information about a post include the user who posted, post time, post contents (text, images, videos, sounds, etc.), reactions and comments that people interact on that post.
-- Information about an user include name, a list of people who the user is following, a list of people following the user.
-- Other needed features:
-    - User can create account, can login, can follow or unfollow others, can edit personal information such as password and name.
-    - User can interact with posts: like, comment.
-    - User can see others' timeline.
+### Requirements
 
-## III. System Interface Definition
+Make sure you have Docker or a Docker-compatible container runtime installed locally to run XSocial.
 
-- Login: GET v1/users {user_name, password} {msg}
-- Sign up: POST v1/users {user_name, email, first_name, last_name, birthday, password} {msg}
-- Edit profile: PUT v1/users {first_name, last_name, birthday, password} {msg}
-- See follow list: GET v1/friends/user_id {} {users}
-- Follow: POST v1/friends/user_id {msg}
-- Unfollow: DELETE v1/friends/user_id {msg}
-- See user posts GET v1/friends/user_id/posts {posts}
-- See post GET v1/posts/post_id {text, image, comments, likes}
-- Create post POST v1/posts {text, image} {msg}
-- Edit post PUT v1/posts/post_id {text, image} {msg}
-- Delete post DELETE v1/posts/post_id {} {msg}
-- Comment post POST v1/posts/post_id/comments {text} {msg}
-- Like post POST v1/posts/post_id/likes {} {msg}
-- Newsfeed GET v1/newsfeeds {posts}
+### Cloning the Project
 
+Clone the XSocial repository to your local machine:
 
-## IV. Define Data Model
+```bash
+git clone https://github.com/maxuanquang/xsocial.git
+```
 
-<img src="docs/models.png" width="800">
+### Setting Up Environment Variables
 
-## V. High Level Design
+XSocial use AWS S3 to store media files. Before running XSocial, you need to set up your environment variables by creating a `.env` file in the project root. Fill in the following details:
 
-<img src="docs/high_level_design.png" width="800">
+```bash
+AWS_S3_BUCKET="example-bucket-name"
+AWS_REGION="example-region-name"
+AWS_ACCESS_KEY_ID="example-access-key-id"
+AWS_SECRET_ACCESS_KEY="example-access-key-secret"
 
-## VI. How to Run
-1. Start all services: `make compose_up_rebuild`
-2. Migrate database: `make up_migration`
-3. By default, the web server runs at: `localhost:19003`
-## VII. TODO
-- Set up Cloudfront CDN for S3 bucket
-- Add Realtime Notifications Service
-- Add Realtime Chat Service
+REACT_APP_API_SERVER="https://localhost"
+GENERATE_SOURCEMAP=false
+```
+
+### Building the Frontend
+
+Build the frontend of XSocial by running the following command:
+
+```bash
+make build_web
+```
+
+### Setting Up Caddy Reverse Proxy
+
+Install [Caddy](https://caddyserver.com/docs/install#debian-ubuntu-raspbian) on your machine, then setup the Caddy server by running:
+
+```bash
+sudo make caddy
+```
+
+### Running Docker Compose
+
+To start all XSocial services, run the following command:
+
+```bash
+make compose_up
+```
+
+### Database Migration
+
+Before running the services, make sure to migrate the database:
+
+```bash
+make up_migration
+```
+
+Once the services are running and database is migrated, you can access XSocial by navigating to `https://localhost` in your web browser.

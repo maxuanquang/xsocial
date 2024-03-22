@@ -23,11 +23,14 @@ vendor:
 docker_clear:
 	docker volume rm $(docker volume ls -qf dangling=true) & docker rmi $(docker images -qf "dangling=true")
 compose_up_rebuild:
-	docker-compose up --build --force-recreate
+	docker compose up --build --force-recreate
 compose_up:
-	docker-compose up
+	docker compose up
+caddy:
+	cp ./Caddyfile /etc/caddy/Caddyfile
+	systemctl restart caddy
 gen_swagger:
 	swag init -g cmd/web_app/main.go
-
 build_web:
+	cp .env web/
 	cd web && npm install && npm run build && cd ..
